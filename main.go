@@ -1,10 +1,13 @@
 package main
 
-import "github.com/san-lab/udpsigner/state"
+import (
+	"github.com/san-lab/udpsigner/cli"
+	"github.com/san-lab/udpsigner/peers"
+)
 
 func main() {
-	state.Mock()
-	//go peers.Initialize()
-	//cli.Top()
+
+	go peers.Initialize()
+	cli.Top()
 
 }
