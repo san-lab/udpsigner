@@ -87,7 +87,7 @@ func Mock() {
 	poly := share.NewPriPoly(pairing.NewSuiteBn256(), T, secretScalar, pairing.NewSuiteBn256().RandomStream())
 	fmt.Println(poly.Coefficients())
 	shares := poly.Shares(6)
-	wshares := WildShares(poly, RendomInts(6))
+	wshares := WildShares(poly, RandomInts(6))
 	for i, s := range shares {
 		fmt.Println(i, *s)
 	}
@@ -145,7 +145,7 @@ func WildShares(poly *share.PriPoly, evalpoints []int) []*PointShare {
 
 //Simply generating a alice of n pseudo-random numbers
 //We do not even need to worry about 0, as the evaluation point Eval(v) is v+1
-func RendomInts(n int) []int {
+func RandomInts(n int) []int {
 	rn := make([]int, n, n)
 	for i := 0; i < n; i++ {
 		rn[i] = rand.Int()
