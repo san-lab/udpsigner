@@ -2,89 +2,148 @@ package state
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
+
+	"github.com/manifoldco/promptui"
 )
 
-type MPPubKeyPayload struct {
-	PartialKey string
-	EvalPoint  string
-	Threshold  int
-}
-
 func (st *State) ProcessMPPubJob(jb *Job) bool {
-	byt1 := []byte(jb.Payload)
-	mppldreq := new(MPPubKeyPayload)
-	mppldres := new(MPPubKeyPayload)
+	if jb.AgentID == st.ThisId {
+		return false
+	}
+	mppldreq := new(PointShare)
 
-	err := json.Unmarshal(byt1, mppldreq)
+	err := mppldreq.UnmarshalJSON([]byte(jb.Payload))
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	resp := new(JobResult)
-	resp.ResultID = ResultID{jb.JobID, st.ThisId}
-
-	mppldres.Threshold = mppldreq.Threshold
-	buf, _ := st.ThisEvaluationPoint.MarshalBinary()
-	mppldres.EvalPoint = hex.EncodeToString(buf)
-	buf, _ = st.ThisPublicKey.MarshalBinary()
-	mppldres.PartialKey = hex.EncodeToString(buf)
-
-	byt2, err := json.Marshal(mppldres)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	resp.Result = string(byt2)
-	jb.AddPartialResult(resp)
-	st.Results[resp.ResultID] = resp
-	if jb.AgentID != st.ThisId {
-		st.ResultToBroadcastQueue(resp, 1)
+	shares := st.KnownScalarShares[mppldreq.SuiteID]
+	if len(shares) == 0 {
+		fmt.Println("No such shares")
+		fmt.Println(mppldreq.SuiteID)
 		return true
 	}
-	return false
+	for _, lps := range shares {
+		locRes := ScalarShareToPointShare(lps)
+
+		resp := new(JobResult)
+		resp.ResultID = ResultID{jb.JobID, st.ThisId}
+		b, _ := locRes.MarshalJSON()
+		resp.Result = string(b)
+		jb.AddPartialResult(resp)
+		st.Results[resp.ResultID] = resp
+		if jb.AgentID != st.ThisId {
+			st.ResultToBroadcastQueue(resp, 1)
+		}
+	}
+
+	return true
 
 }
 
-func NewMPPubJob() {
-	st := CurrentState
-	if st.ThisSecretValue == nil {
-		fmt.Println("Keys not initialized")
+func NewMPPubJobStart() {
+	for {
+		suites := make([]string, len(CurrentState.KnownScalarShares))
+		labels := make([]string, len(suites))
+		i := 0
+		for su, l := range CurrentState.KnownScalarShares {
+			labels[i] = fmt.Sprintf("%s [%v of %v]", su, len(l), l[0].T)
+			suites[i] = su
+			i++
+		}
+		prpt := promptui.Select{
+			Label: "Select the share to start an MP computation",
+			Size:  len(suites) + 1,
+			Items: append(labels, "Back"),
+		}
+
+		i, res, _ := prpt.Run()
+		if res == "Back" {
+			return
+		}
+		NewMPPubJob(suites[i])
 		return
+
 	}
+}
+
+func NewMPPubJob(suiteID string) error {
+	st := CurrentState
+	shares := st.KnownScalarShares[suiteID]
+	if len(shares) == 0 {
+		return fmt.Errorf("No shares known for suiteID %s", suiteID)
+	}
+
+	sh := shares[0]
+
 	j := Job{
 		Type:                 MPPublicKeyJT,
 		JobID:                "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
 		AgentID:              st.ThisId,
-		partialResults:       map[AgentID]*JobResult{},
+		PartialResults:       map[AgentID]*JobResult{},
 		partialResultArrival: MPPubKeyResultArrival,
 	}
 	test++
 
-	mppld := new(MPPubKeyPayload)
-	mppld.Threshold = 3
-	buf, _ := st.ThisEvaluationPoint.MarshalBinary()
-	mppld.EvalPoint = hex.EncodeToString(buf)
-	buf, _ = st.ThisPublicKey.MarshalBinary()
-	mppld.PartialKey = hex.EncodeToString(buf)
-	b, err := json.Marshal(mppld)
+	payload := ScalarShareToPointShare(sh)
+
+	b, err := payload.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	j.Payload = string(b)
+	//Adding local share as a partilal result
+	pres := new(JobResult)
+	pres.ResultID = ResultID{j.JobID, st.ThisId}
+	pres.Arrived = time.Now()
+	pres.Result = string(b)
+	j.PartialResults[st.ThisId] = pres
+
+	JobToBroadcastQueue(&j, 1)
+	return nil
+}
+
+func MPPubKeyResultArrival(jbr *JobResult) {
+	jb, local := CurrentState.PendingJobs[jbr.ResultID.JobID]
+	if !local {
+		return
+	}
+
+	r := new(PointShare)
+	r.UnmarshalJSON([]byte(jb.Payload))
+
+	if len(jb.PartialResults) < r.T {
+		return
+	}
+
+	//Deserialize all shares
+	//Elimintate duplicates of same eval point
+	shares := []*PointShare{}
+	//pss[r.E] = r
+	for _, parr := range jb.PartialResults {
+
+		ps := new(PointShare)
+		ps.UnmarshalJSON([]byte(parr.Result))
+		shares = append(shares, ps)
+	}
+
+	unique := PruneDupShares(shares)
+
+	if len(unique) < r.T {
+		return
+	}
+
+	PBL, err := RecoverSecretPoint(CurrentState.suite.G2(), unique, r.T)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	j.Payload = string(b)
-	fmt.Println(j)
+	binform, _ := PBL.MarshalBinary()
+	jb.FinalResult = hex.EncodeToString(binform)
+	CurrentState.markAsDone(jb)
 
-	st.ProcessTestJob(&j)
-	JobToBroadcastQueue(&j, 1)
-}
-
-func MPPubKeyResultArrival(jb *Job) {
-	for _, r := range jb.partialResults {
-		fmt.Println(r.Result)
-	}
-	return
 }

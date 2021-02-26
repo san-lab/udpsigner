@@ -11,6 +11,8 @@ import (
 )
 
 var Nodes = map[string]Plate{}
+var FrameSamples = map[string][]state.Frame{}
+var Sample = false
 
 var Repeat = 3
 
@@ -21,14 +23,17 @@ type Plate struct {
 	LastSeen time.Time
 }
 
-func Initialize() (err error) {
-	s := peerdiscovery.Settings{Limit: -1,
-		PayloadFunc:      state.CurrentState.ComposeMessage,
+var S peerdiscovery.Settings
+
+func Initialize(state *state.State) (err error) {
+	S = peerdiscovery.Settings{Limit: -1,
+		PayloadFunc:      state.ComposeMessage,
 		TimeLimit:        -1,
 		Delay:            500 * time.Millisecond,
 		Notify:           Incoming,
-		DisableBroadcast: false}
-	_, err = peerdiscovery.Discover(s)
+		DisableBroadcast: state.DisableBroadcast,
+	}
+	_, err = peerdiscovery.Discover(S)
 
 	if err != nil {
 		fmt.Println(err)
@@ -39,6 +44,9 @@ func Initialize() (err error) {
 }
 
 func Incoming(d peerdiscovery.Discovered) {
+	if len(d.Payload) == 0 {
+		return
+	}
 	f := new(state.Frame)
 	e := json.Unmarshal(d.Payload, &f)
 	pl := Plate{}
@@ -55,6 +63,9 @@ func Incoming(d peerdiscovery.Discovered) {
 		pl.LastSeen = time.Now()
 	}
 	Nodes[d.Address] = pl
+	if Sample {
+		FrameSamples[d.Address] = append(FrameSamples[d.Address], *f)
+	}
 
 	jrq := f.JobRequests
 	for _, v := range jrq {
@@ -70,5 +81,13 @@ func Incoming(d peerdiscovery.Discovered) {
 	for _, r := range f.JobResults {
 		state.CurrentState.AddJobResult(r)
 	}
+}
 
+func DoSample(dur time.Duration) {
+	FrameSamples = map[string][]state.Frame{}
+	go func() {
+		Sample = true
+		time.Sleep(dur)
+		Sample = false
+	}()
 }

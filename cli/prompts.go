@@ -1,9 +1,13 @@
 package cli
 
 import (
+	"bufio"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
+	"time"
 
 	"github.com/manifoldco/promptui"
 	"github.com/san-lab/udpsigner/peers"
@@ -93,16 +97,18 @@ func Peers() {
 
 const evalpoint = "Evaluation point"
 const pubkey = "Public key"
-const privkey = "Private key"
+const localkeys = "Keys"
+const knownshares = "Known Key Shares"
 const current = "Print current setup"
-const broadcast = "Disable broadcast"
+const broadcast = "Manage broadcast"
 const thisname = "Set Name"
+const udp = "UDP Config"
 
 func Setup() {
 	for {
 		prompt := promptui.Select{
 			Label: "Setup",
-			Items: []string{current, thisname, evalpoint, pubkey, privkey, up},
+			Items: []string{current, thisname, udp, knownshares, localkeys, up},
 			Size:  7,
 		}
 		_, result, err := prompt.Run()
@@ -115,26 +121,174 @@ func Setup() {
 			SetName()
 		case current:
 			PrintCurrentSetup()
+		case udp:
+			UDPConfig()
 		case evalpoint:
 			SetEvalPoint()
-		case pubkey:
-			if state.CurrentState.ThisPublicKey == nil {
-				fmt.Println("Kublic key not set")
-				continue
-			}
-			b, e := state.CurrentState.ThisPublicKey.MarshalBinary()
-			if e != nil {
-				fmt.Println(e)
-			} else {
-				fmt.Println(hex.EncodeToString(b))
-			}
-		case privkey:
-			PrivateKey()
+		case localkeys:
+			LocalKeys()
 		case up:
 			return
+		case knownshares:
+			KnownKeyShares()
 		}
 	}
 
+}
+
+const importshare = "Import a share from a file"
+
+func KnownKeyShares() {
+	for {
+		suites := make([]string, len(state.CurrentState.KnownScalarShares))
+		labels := make([]string, len(suites))
+		i := 0
+		for su, l := range state.CurrentState.KnownScalarShares {
+			labels[i] = fmt.Sprintf("%s [%v of %v]", su, len(l), l[0].T)
+			suites[i] = su
+			i++
+		}
+		prpt := promptui.Select{
+			Label: "Known Secret Shares",
+			Size:  len(suites) + 2,
+			Items: append(labels, importshare, up),
+		}
+
+		i, res, _ := prpt.Run()
+		if res == up {
+			return
+		}
+		if res == importshare {
+			ImportNewShare()
+		}
+
+	}
+
+}
+
+func ImportNewShare() {
+	prompt := promptui.Prompt{
+		Label: "Sharefile name?",
+	}
+	filename, err := prompt.Run()
+	if err != nil {
+		return
+	}
+	err = state.CurrentState.ImportShareFile(filename)
+	return
+}
+
+const samplef = "Sample incoming frames (3s)"
+const viewsamples = "Viev sample frames"
+
+var sampleTime = 3
+
+func UDPConfig() {
+	for {
+		prompt := promptui.Select{
+			Label: "UDP",
+			Items: []string{broadcast, samplef, viewsamples, up},
+		}
+		_, res, err := prompt.Run()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		switch res {
+		case up:
+			return
+		case broadcast:
+			Broadcast()
+		case samplef:
+			peers.DoSample(time.Duration(sampleTime) * time.Second)
+		case viewsamples:
+			Viewsamples()
+		}
+	}
+}
+
+func Viewsamples() {
+	for {
+		addrs := make([]string, len(peers.FrameSamples))
+		labels := make([]string, len(peers.FrameSamples))
+		i := 0
+		for a, l := range peers.FrameSamples {
+			labels[i] = fmt.Sprintf("%s [%v]", a, len(l))
+			addrs[i] = a
+			i++
+		}
+		prpt := promptui.Select{
+			Label: "Sample UDP Frames",
+			Size:  len(addrs) + 2,
+			Items: append(labels, up),
+		}
+
+		i, res, _ := prpt.Run()
+		if res == up {
+			return
+		}
+		ShowFramesFrom(addrs[i])
+	}
+
+}
+
+func ShowFramesFrom(adr string) {
+	frames := make([]string, len(peers.FrameSamples[adr]))
+	for i, f := range peers.FrameSamples[adr] {
+		frames[i] = f.Timestamp.String()
+	}
+	for {
+		prompt := promptui.Select{
+			Label: "Frames from " + adr,
+			Items: append(frames, up),
+			Size:  len(frames) + 2,
+		}
+
+		i, r, _ := prompt.Run()
+		if r == up {
+			return
+		}
+		f := peers.FrameSamples[adr][i]
+		fb, _ := json.MarshalIndent(f, " ", " ")
+		fmt.Println(string(fb))
+		err := state.CurrentState.VerifyFrame(&f)
+		if err == nil {
+			fmt.Println("Signature Ok")
+		} else {
+			fmt.Println(err)
+		}
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+
+	}
+}
+
+const disablebrd = "Stop broacasting"
+const enablebrd = "Start broadcasting"
+const brdinterval = "Broadcast interval"
+
+func Broadcast() {
+	for {
+		prompt := promptui.Select{
+			Label: fmt.Sprintf("Currently broadcasting: %v", !state.CurrentState.DisableBroadcast),
+			Items: []string{enablebrd, disablebrd, brdinterval, up},
+		}
+		_, res, err := prompt.Run()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		switch res {
+		case up:
+			return
+		case disablebrd:
+			state.CurrentState.DisableBroadcast = true
+			peers.S.DisableBroadcast = true
+		case enablebrd:
+
+			state.CurrentState.DisableBroadcast = false
+			peers.S.DisableBroadcast = false
+		}
+	}
 }
 
 func PrintCurrentSetup() {
@@ -147,14 +301,16 @@ func PrintCurrentSetup() {
 
 const printpriv = "Print as HEX"
 const inputpriv = "Input as HEX"
+const importpriv = "Import from keyfile"
 const setrandpriv = "Select Random"
 const exportpriv = "Export to keyfile"
 
-func PrivateKey() {
+func LocalKeys() {
 	for {
 		prompt := promptui.Select{
 			Label: "Private Key",
-			Items: []string{printpriv, inputpriv, setrandpriv, exportpriv, up},
+			Items: []string{printpriv, importpriv, setrandpriv, pubkey, inputpriv, up},
+			Size:  7,
 		}
 		_, result, err := prompt.Run()
 		if err != nil {
@@ -166,17 +322,66 @@ func PrivateKey() {
 			return
 		case printpriv:
 			fmt.Println(state.CurrentState.ThisSecretValue)
-		case thisname:
-			SetName()
+		case pubkey:
+			if state.CurrentState.ThisPublicKey == nil {
+				fmt.Println("Public key not set")
+				continue
+			}
+			b, e := state.CurrentState.ThisPublicKey.MarshalBinary()
+			if e != nil {
+				fmt.Println(e)
+			} else {
+				fmt.Println(hex.EncodeToString(b))
+			}
 		case setrandpriv:
 			state.SetRandomKey()
+		case importpriv:
+			err := ImportKeyFile()
+			if err != nil {
+				fmt.Println(err)
+			}
+		case inputpriv:
+			inputPrivKeyHEX()
 		}
 	}
 }
 
+func inputPrivKeyHEX() {
+	var deft = "01"
+	if state.CurrentState.ThisSecretValue != nil {
+		deft = state.CurrentState.ThisSecretValue.String()
+	}
+	prpt := promptui.Prompt{
+		Label:    "Enter private key as hex",
+		Validate: ValidateEvalPoint,
+		Default:  deft,
+	}
+	result, err := prpt.Run()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		bi := big.NewInt(0)
+		bi.SetString(result, 16)
+		state.CurrentState.SetPrivKeyBytes(bi.Bytes())
+	}
+
+}
+
+func ImportKeyFile() (err error) {
+	prompt := promptui.Prompt{
+		Label: "Keyfile name?",
+	}
+	filename, err := prompt.Run()
+	if err != nil {
+		return
+	}
+	err = state.CurrentState.ImportKeyFile(filename)
+	return
+}
+
 func ValidateEvalPoint(in string) error {
 	bi := big.NewInt(0)
-	bi, ok := bi.SetString(in, 10)
+	bi, ok := bi.SetString(in, 16)
 	if !ok {
 		return fmt.Errorf("Invalid input")
 	}
@@ -192,10 +397,10 @@ func SetEvalPoint() {
 	}
 	result, err := prpt.Run()
 	if err != nil {
-		//fmt.Println(err)
+		fmt.Println(err)
 	} else {
 		bi := big.NewInt(0)
-		bi.SetString(result, 10)
+		bi.SetString(result, 16)
 		state.CurrentState.ThisEvaluationPoint.SetBytes(bi.Bytes())
 	}
 

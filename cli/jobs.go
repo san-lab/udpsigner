@@ -70,7 +70,10 @@ func DoneJobs() {
 		}
 
 		if i < len(ids) {
-			fmt.Println(state.CurrentState.DoneJobs[ids[i]])
+			j := state.CurrentState.DoneJobs[ids[i]]
+			fmt.Println("Job Type:", j.Type)
+			fmt.Println("Finished:", j.FinishedAt)
+			fmt.Println("Result:", j.FinalResult)
 		}
 
 	}
@@ -103,15 +106,16 @@ func PendingJobs() {
 		case up:
 			return
 		}
+		j := state.CurrentState.PendingJobs[ids[i]]
+		if j != nil {
 
-		if i < len(ids) {
-			ManageJob(state.CurrentState.PendingJobs[ids[i]])
+			ManageJob(j)
 		}
 
 	}
 }
 
-const japprove = "Process"
+const japprove = "Approve"
 const jdelete = "Delete"
 const jresend = "Send again"
 const jdetails = "Details"
@@ -156,7 +160,43 @@ func ManageJob(jb *state.Job) {
 }
 
 func JobDetails(jb *state.Job) {
-	fmt.Println(jb)
+	fmt.Println("Job Details for", jb.JobID)
+	fmt.Println("Finished:", jb.Finished)
+	switch jb.Type {
+	case state.MPSignature:
+		psig, _ := state.PartSigFromHEX(jb.Payload)
+		fmt.Printf("Request to sign message: >>%s<<", psig.Plaintext)
+		fmt.Println("Requested by:", jb.AgentID)
+		fmt.Println("Suite:", psig.SuiteID)
+		fmt.Println("Responses from")
+		for i, r := range jb.PartialResults {
+			psig2, _ := state.PartSigFromHEX(r.Result)
+			fmt.Println(i, psig2.Signature)
+		}
+	case state.MPPublicKeyJT:
+		ss := new(state.PointShare)
+		ss.UnmarshalJSON([]byte(jb.Payload))
+		fmt.Println("Request to reassemble Public Key")
+		fmt.Println("Requested by:", jb.AgentID)
+		fmt.Println("Suite:", ss.SuiteID)
+		fmt.Println("Responses from")
+		for i, r := range jb.PartialResults {
+			ss.UnmarshalJSON([]byte(r.Result))
+			fmt.Println(i, ss.P)
+		}
+	default:
+		fmt.Println("Request:", jb.Payload)
+		fmt.Println("Responses from")
+		for i, r := range jb.PartialResults {
+			lim := 32
+			if lim > len(r.Result) {
+				lim = len(r.Result)
+			}
+			fmt.Println(i, r.Result[:lim], "...")
+		}
+	}
+
+	fmt.Println("Final result:", jb.FinalResult)
 }
 
 func DeleteJob(jb *state.Job) {
@@ -167,12 +207,13 @@ func DeleteJob(jb *state.Job) {
 const testjob = "Test task"
 const mpsignjob = "New M-P signature"
 const pubkeyjob = "Public Key assembly"
+const localsign = "Local Signature"
 
 func NewJob() {
 	for {
 		prompt := promptui.Select{
 			Label: "Select Action ",
-			Items: []string{testjob, pubkeyjob, mpsignjob, up},
+			Items: []string{testjob, pubkeyjob, mpsignjob, localsign, up},
 			//AddLabel: endpoint,
 		}
 
@@ -187,8 +228,11 @@ func NewJob() {
 		case testjob:
 			NewTestJob()
 		case pubkeyjob:
-			state.NewMPPubJob()
+			state.NewMPPubJobStart()
 		case mpsignjob:
+			state.NewMPSignJobStart()
+		case localsign:
+			TestLocalSignature()
 
 		case up:
 			return

@@ -3,43 +3,78 @@ package state
 import (
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"math/rand"
 
 	"go.dedis.ch/kyber/v3"
-	"go.dedis.ch/kyber/v3/pairing"
 	"go.dedis.ch/kyber/v3/share"
 )
 
-type PointShare struct {
-	I kyber.Scalar
-	P kyber.Point
+type ScalarShare struct {
+	E       kyber.Scalar //Evaluation point
+	V       kyber.Scalar //Value at E
+	T       int          //Theshold of the Suite
+	SuiteID string       //Suite ID
 }
 
-func (ps *PointShare) Serialize() (buf []byte) {
+//PointShare , as contrasted with kyber.share.PriShare, the value of E is NOT shifted by 1
+//It also keeps the threshold value and the ID common to all matching shares
+type PointShare struct {
+	E       kyber.Scalar
+	P       kyber.Point
+	T       int
+	SuiteID string
+}
 
-	buf, err := ps.I.MarshalBinary()
+func ScalarShareToPointShare(scs *ScalarShare) *PointShare {
+	ps := new(PointShare)
+	ps.E = scs.E
+	ps.SuiteID = scs.SuiteID
+	ps.T = scs.T
+	ps.P = CurrentState.suite.G2().Point().Mul(scs.V, nil)
+	return ps
+}
+
+func (ps *PointShare) Serialize() (ser []byte) {
+
+	//First T
+	ser = []byte{byte(ps.T)}
+
+	//Then Eval point
+	buf1, err := ps.E.MarshalBinary()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	ser = append(ser, buf1...)
+
+	//Then Point-Value
 	buf2, err := ps.P.MarshalBinary()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	buf = append(buf, buf2...)
+
+	ser = append(ser, buf2...)
+
+	//Last SuiteID
+	ser = append(ser, []byte(ps.SuiteID)...)
 	return
 }
 
 func (ps *PointShare) Deserialize(btes []byte) (*PointShare, error) {
-	if len(btes) != 96 {
+	if len(btes) < 161 {
 		return nil, fmt.Errorf("Wrong buffer length", len(btes))
 	}
-	ps.I = CurrentState.suite.G1().Scalar()
-	ps.P = CurrentState.suite.G1().Point()
-	ps.I.SetBytes(btes[:32])
-	ps.P.UnmarshalBinary(btes[32:])
+	ps.T = int(btes[0])
+	ps.E = CurrentState.suite.G2().Scalar()
+	ps.P = CurrentState.suite.G2().Point()
+
+	ps.E.SetBytes(btes[1:33])
+	ps.P.UnmarshalBinary(btes[33:161])
+	if len(btes) > 97 {
+		ps.SuiteID = string(btes[161:])
+	}
 	return ps, nil
 }
 
@@ -57,87 +92,14 @@ func (ps *PointShare) UnmarshalJSON(in []byte) error {
 	return nil
 }
 
-func PointShares(poly share.PriPoly, partsCount int) []*PointShare {
-	shares := poly.Shares(partsCount)
-
-	return PriShares2PointShares(shares)
-
-}
-
-func PriShares2PointShares(shares []*share.PriShare) []*PointShare {
-	pshares := make([]*PointShare, 0, len(shares))
-
-	for _, s := range shares {
-
-		pshares = append(pshares, &PointShare{CurrentState.suite.G1().Scalar().SetInt64(int64(s.I + 1)), CurrentState.suite.G1().Point().Mul(s.V, nil)})
-
-	}
-	return pshares
-}
-
-func Mock() {
-
-	secretScalar := CurrentState.suite.G1().Scalar().SetInt64(int64(42))
-	fmt.Println("Secret number:", secretScalar)
-	secretPoint := CurrentState.suite.G1().Point().Mul(secretScalar, nil)
-	fmt.Println("Secret point:", secretPoint)
-
-	T := 4
-
-	poly := share.NewPriPoly(pairing.NewSuiteBn256(), T, secretScalar, pairing.NewSuiteBn256().RandomStream())
-	fmt.Println(poly.Coefficients())
-	shares := poly.Shares(6)
-	wshares := WildShares(poly, RandomInts(6))
-	for i, s := range shares {
-		fmt.Println(i, *s)
-	}
-
-	for i, s := range wshares {
-		fmt.Println(i, *s)
-		b, e := s.MarshalJSON()
-		fmt.Println(e, "JSON", string(b))
-		s2 := new(PointShare)
-		e = s2.UnmarshalJSON(b)
-		fmt.Println(e, s2.P.Equal(s.P), s2.I.Equal(s.I))
-
-	}
-
-	rec, _ := share.RecoverSecret(CurrentState.suite.G1(), shares, T, T)
-	b, _ := rec.MarshalBinary()
-	r := new(big.Int)
-	r.SetBytes(b)
-	fmt.Println("Recovered scalar:", r)
-
-	pshares := PriShares2PointShares(shares)
-	rpt, err := RecoverSecretPoint(CurrentState.suite.G1(), pshares[:4], T)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("Recovered point:", rpt)
-
-	rpt, err = RecoverSecretPoint(CurrentState.suite.G1(), wshares[2:], T)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("Recovered point:", rpt)
-
-	badshares := append(pshares[:3], pshares[0])
-	rpt, err = RecoverSecretPoint(CurrentState.suite.G1(), badshares, T)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("Recovered (bad) point:", rpt)
-
-}
-
 //Now this is silly, but because of the poly.Eval() implementation the polynomila will be evaluated
 //at evalpoints[i]+1...
 func WildShares(poly *share.PriPoly, evalpoints []int) []*PointShare {
 	shares := make([]*PointShare, 0, len(evalpoints))
 	for _, ep := range evalpoints {
 		ps := new(PointShare)
-		ps.I = CurrentState.suite.G1().Scalar().SetInt64(int64(ep) + 1)
-		ps.P = CurrentState.suite.G1().Point().Mul(poly.Eval(ep).V, nil)
+		ps.E = CurrentState.suite.G2().Scalar().SetInt64(int64(ep) + 1)
+		ps.P = CurrentState.suite.G2().Point().Mul(poly.Eval(ep).V, nil)
 		shares = append(shares, ps)
 	}
 	return shares
@@ -153,8 +115,26 @@ func RandomInts(n int) []int {
 	return rn
 }
 
-func RecoverSecretPoint(g kyber.Group, shares []*PointShare, t int) (kyber.Point, error) {
+func PruneDupShares(in []*PointShare) (unique []*PointShare) {
+	unique = []*PointShare{}
+	for _, ps := range in {
+		isunique := true
+		for _, u := range unique {
+			if u.E.Equal(ps.E) {
+				isunique = false
+				break
+			}
+		}
+		if isunique {
+			unique = append(unique, ps)
+		}
 
+	}
+	return
+}
+
+func RecoverSecretPoint(g kyber.Group, shares []*PointShare, t int) (kyber.Point, error) {
+	shares = PruneDupShares(shares)
 	if len(shares) < t {
 		return nil, fmt.Errorf("share: not enough shares to recover secret")
 	}
@@ -164,7 +144,7 @@ func RecoverSecretPoint(g kyber.Group, shares []*PointShare, t int) (kyber.Point
 	den := g.Scalar()
 	tmp := g.Scalar()
 
-	for i, si := range shares {
+	for i, si := range shares[:t] {
 		num.Set(si.P)
 		den.One()
 
@@ -173,8 +153,8 @@ func RecoverSecretPoint(g kyber.Group, shares []*PointShare, t int) (kyber.Point
 				continue
 			}
 
-			num.Mul(sj.I, num)
-			tmp.Sub(sj.I, si.I)
+			num.Mul(sj.E, num)
+			tmp.Sub(sj.E, si.E)
 			den.Mul(den, tmp)
 		}
 

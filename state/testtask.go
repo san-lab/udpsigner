@@ -18,12 +18,16 @@ func (st *State) ProcessTestJob(jb *Job) bool {
 	return false
 }
 
-func TestJobResultArrival(jb *Job) {
-	if len(jb.partialResults) > 0 {
+func TestJobResultArrival(r *JobResult) {
+	jb, has := CurrentState.PendingJobs[r.ResultID.JobID]
+	if !has {
+		return
+	}
+	if len(jb.PartialResults) > 0 {
 
-		for _, r := range jb.partialResults {
+		for _, r := range jb.PartialResults {
 			if jb.AgentID != r.ResultID.AgentID {
-				jb.finalResult = fmt.Sprintf("Response by %v: %v", r.ResultID.AgentID, r.Result)
+				jb.FinalResult = fmt.Sprintf("Response by %v: %v", r.ResultID.AgentID, r.Result)
 				CurrentState.markAsDone(jb)
 				break
 			}
@@ -42,7 +46,7 @@ func (st *State) NewTestJob(payload string) *Job {
 		JobID:                "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
 		Payload:              payload,
 		AgentID:              st.ThisId,
-		partialResults:       map[AgentID]*JobResult{},
+		PartialResults:       map[AgentID]*JobResult{},
 		partialResultArrival: TestJobResultArrival,
 	}
 	test++

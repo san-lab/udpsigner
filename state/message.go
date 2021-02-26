@@ -1,6 +1,9 @@
 package state
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 /*
 type JobRequest struct {
@@ -19,10 +22,17 @@ type JobResult struct {
 type Frame struct {
 	SenderName  string
 	SenderID    AgentID
+	Timestamp   time.Time
 	JobRequests []*Job
 	JobResults  []*JobResult
 	PubKey      string
 	Signature   string
+}
+
+func (f *Frame) FormToSign() ([]byte, error) {
+	f.PubKey = ""
+	f.Signature = ""
+	return json.Marshal(f)
 }
 
 type AgentID string

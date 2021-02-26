@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
+	"github.com/san-lab/secretsplitcli/goethkey"
 	"go.dedis.ch/kyber/v3"
 
 	"go.dedis.ch/kyber/v3/pairing"
@@ -25,6 +27,8 @@ type State struct {
 	Results             map[ResultID]*JobResult
 	JobBroadcast        map[string]int
 	ResultBroadcast     map[ResultID]int
+	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
+
 }
 
 type ResultID struct {
@@ -33,6 +37,9 @@ type ResultID struct {
 }
 
 func (st *State) ComposeMessage() []byte {
+	if st.DisableBroadcast {
+		return nil
+	}
 	f := Frame{}
 	if len(st.ThisName) > 0 {
 		f.SenderName = st.ThisName
@@ -76,6 +83,9 @@ func (st *State) ComposeMessage() []byte {
 		}
 
 	}
+	f.Timestamp = time.Now()
+
+	st.SignFrame(&f)
 	b, e := json.Marshal(f)
 	if e != nil {
 		fmt.Println(e)
@@ -95,6 +105,7 @@ var CurrentState = State{
 	ThisId:              AgentID(fmt.Sprint(src.Int63())),
 	DoneJobs:            map[string]*Job{},
 	ThisEvaluationPoint: pairing.NewSuiteBn256().G1().Scalar().One(),
+	KnownScalarShares:   map[string][]*ScalarShare{},
 }
 
 func (st *State) AddJobRequest(jr *Job) {
@@ -137,10 +148,10 @@ type Job struct {
 	FinishedAt           time.Time `json:"-"`
 	success              bool
 	Error                string
-	partialResults       map[AgentID]*JobResult `json:"-"`
-	finalResult          string
+	PartialResults       map[AgentID]*JobResult `json:"-"`
+	FinalResult          string                 `json:"-"`
 	Payload              string
-	partialResultArrival func(*Job) `json:"-"`
+	partialResultArrival func(*JobResult) `json:"-"`
 }
 
 func SetRandomKey() {
@@ -176,6 +187,10 @@ func (st *State) ProcessJob(jb *Job) {
 		if st.ProcessMPPubJob(jb) {
 			st.markAsDone(jb)
 		}
+	case MPSignature:
+		if st.ProcessMPSignJob(jb) {
+			st.markAsDone(jb)
+		}
 	default:
 		fmt.Println("Unknown job type:", jb.Type)
 
@@ -184,14 +199,59 @@ func (st *State) ProcessJob(jb *Job) {
 }
 
 func (jb *Job) AddPartialResult(r *JobResult) bool {
-	if jb.partialResults == nil {
-		jb.partialResults = map[AgentID]*JobResult{}
+	if jb.PartialResults == nil {
+		jb.PartialResults = map[AgentID]*JobResult{}
 	}
-	jb.partialResults[r.ResultID.AgentID] = r
+	jb.PartialResults[r.ResultID.AgentID] = r
 	if jb.partialResultArrival != nil {
-		jb.partialResultArrival(jb)
+		jb.partialResultArrival(r)
 	}
 	return false
+}
+
+func (st *State) ImportKeyFile(filename string) (err error) {
+	kf, err := goethkey.ReadAndProcessKeyfile(filename)
+	if err != nil {
+		return
+	}
+	ps, err := goethkey.Deserialize(kf.Plaintext)
+	if err != nil {
+		return
+	}
+	st.ThisEvaluationPoint = st.suite.G2().Scalar().SetInt64(int64(ps.I + 1))
+	st.ThisSecretValue = ps.V
+	st.ThisPublicKey = st.suite.G2().Point().Mul(ps.V, nil)
+
+	return
+}
+
+func (st *State) ImportShareFile(filename string) (err error) {
+	kf, err := goethkey.ReadAndProcessKeyfile(filename)
+	if err != nil {
+		return
+	}
+	if kf.ID[:8] != goethkey.SplitHeader {
+		err = fmt.Errorf("Not a Sharefile ID")
+		return
+	}
+	T, err := strconv.Atoi(kf.ID[8:10])
+	if err != nil {
+		return
+	}
+	sID := kf.ID[13:]
+	ps, err := goethkey.Deserialize(kf.Plaintext)
+	if err != nil {
+		return
+	}
+	scs := new(ScalarShare)
+	scs.T = T
+	scs.SuiteID = sID
+	scs.V = ps.V
+	scs.E = st.suite.G2().Scalar().SetInt64(int64(ps.I + 1))
+	//TODO Check and prevent submitting duplicates
+	st.KnownScalarShares[sID] = append(st.KnownScalarShares[sID], scs)
+
+	return
 }
 
 func (st *State) ResultToBroadcastQueue(jres *JobResult, retry int) {
@@ -211,4 +271,10 @@ func (st *State) markAsDone(jb *Job) {
 func JobToBroadcastQueue(jb *Job, retry int) {
 	CurrentState.PendingJobs[jb.JobID] = jb
 	CurrentState.JobBroadcast[jb.JobID] = retry
+}
+
+func (st *State) SetPrivKeyBytes(b []byte) {
+	G2 := st.suite.G2()
+	st.ThisSecretValue = G2.Scalar().SetBytes(b)
+	st.ThisPublicKey = G2.Point().Mul(st.ThisSecretValue, nil)
 }
