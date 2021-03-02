@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dedis/kyber/sign/bls"
 	"github.com/manifoldco/promptui"
 	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/sign/bls"
 )
 
 func (st *State) ProcessMPSignJob(jb *Job) bool {
