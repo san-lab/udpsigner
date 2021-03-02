@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/dedis/kyber/sign/bls"
 	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/sign/bls"
 )
 
 func (cs *State) Sign(message []byte) ([]byte, error) {
