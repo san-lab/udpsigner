@@ -17,7 +17,7 @@ TESTING
 Use docker to build the image.
 Then run a few instances of the udpsigner in separate docker containers.
 They should discover one-another automatically. 
-
+Generate some SSS key shares using secretsplitcli, with any number of shares and threshold (within reason ;) ). 
 Then import respective keyfiles with shares into different nodes and issue a "job request" from ine of the nodes.
 The other nodes can then "aprove" the job request (and contribute to the MPC), are reject it.
 If enough nodes agree to collaborate, a valid signature (or a vaild Public Key) will be generated.
