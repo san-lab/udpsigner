@@ -1,5 +1,6 @@
 # udpsigner
 ​
+Boneh–Lynn–Shacham multi-party threshold signatures
 
 This is a simple framework to run MPC tests.
 It uses UDP discovery to find other nodes, based on the project:
