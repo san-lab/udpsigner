@@ -15,7 +15,7 @@ The simplest way to test it is to use a cli for generating Shamir Secret Shares 
 https://github.com/san-lab/secretsplitcli 
 (for docker, you probably want to run the containers mapping the current directory with sharefiles, something like:  
  "docker run -it --rm -v $(pwd):/data udpsigner",
- and inside the docker import from "/data/youkeysharefile.json")             
+ and inside the docker import from "/data/yourkeysharefile.json")             
 
 TESTING  
 Use docker to build the image.
