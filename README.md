@@ -14,7 +14,8 @@ Everything is "under construction" atm, but it should work.
 The simplest way to test it is to use a cli for generating Shamir Secret Shares of an BN256 BLS signatures using   
 https://github.com/san-lab/secretsplitcli 
 (for docker, you probably want to run the containers mapping the current directory with sharefiles, something like:  
- "docker run -it --rm -v $(pwd):/data udpsigner" )             
+ "docker run -it --rm -v $(pwd):/data udpsigner",
+ and inside the docker impoer from "/data/youkeysharefile.json")             
 
 TESTING  
 Use docker to build the image.
