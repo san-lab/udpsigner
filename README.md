@@ -12,7 +12,9 @@ to provide a simplistic stateful CLI
 
 Everything is "under construction" atm, but it should work.
 The simplest way to test it is to use a cli for generating Shamir Secret Shares of an BN256 BLS signatures using   
-https://github.com/san-lab/secretsplitcli
+https://github.com/san-lab/secretsplitcli 
+(for docker, you probably want to run the containers mapping the current directory with sharefiles, something like:  
+ "docker run -it --rm -v $(pwd):/data udpsigner" )             
 
 TESTING  
 Use docker to build the image.
@@ -20,7 +22,7 @@ Then run a few instances of the udpsigner in separate docker containers.
 They should discover one-another automatically. 
 Generate some SSS key shares using secretsplitcli, with any number of shares and threshold (within reason ;) ). 
 Then import respective keyfiles with shares into different nodes and issue a "job request" from ine of the nodes.
-The other nodes can then "aprove" the job request (and contribute to the MPC), are reject it.
+The other nodes can then "aprove" the job request (and contribute to the MPC), or reject it.
 If enough nodes agree to collaborate, a valid signature (or a vaild Public Key) will be generated.
 
 As of beginnig of March 2021, there is only a couple of MPC algorithms: to calculate a BLS public key and a BLS message signature based on the (threshold) key shares owned by the nodes.
