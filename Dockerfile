@@ -6,6 +6,7 @@ RUN git clone https://github.com/san-lab/secretsplitcli.git && \
  git clone https://github.com/san-lab/udpsigner.git 
 
 WORKDIR  /src/github.com/san-lab/udpsigner
+COPY ./*.json ./
 ENV GOPATH=/
 WORKDIR  /src/github.com/san-lab/udpsigner
 RUN go get golang.org/x/crypto/sha3
