@@ -12,8 +12,8 @@ to provide a simplistic stateful CLI
 
 Everything is "under construction" atm, but it should work.
 The simplest way to test it is to use a cli for generating Shamir Secret Shares of an BN256 BLS signatures using   
-https://github.com/san-lab/secretsplitcli 
-(for docker, you probably want to run the containers mapping the current directory with sharefiles, something like:  
+https://github.com/san-lab/secretsplitcli, or use the 2-out-of-3 sample keyshare files included. 
+(for importing your custom files in docker, you probably want to run the containers mapping the current directory, something like:  
  "docker run -it --rm -v $(pwd):/data udpsigner",
  and inside the docker import from "/data/yourkeysharefile.json")             
 
