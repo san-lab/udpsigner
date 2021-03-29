@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,22 +11,14 @@ import (
 	"github.com/san-lab/udpsigner/state"
 )
 
-var Nodes = map[string]Plate{}
 var FrameSamples = map[string][]state.Frame{}
 var Sample = false
 
 var Repeat = 3
 
-type Plate struct {
-	Name     string
-	ID       state.AgentID
-	Address  string
-	LastSeen time.Time
-}
-
 var S peerdiscovery.Settings
 
-func Initialize(state *state.State) (err error) {
+func Initialize(state *state.State, ctx context.Context) (err error) {
 	S = peerdiscovery.Settings{Limit: -1,
 		PayloadFunc:      state.ComposeMessage,
 		TimeLimit:        -1,
@@ -49,7 +42,7 @@ func Incoming(d peerdiscovery.Discovered) {
 	}
 	f := new(state.Frame)
 	e := json.Unmarshal(d.Payload, &f)
-	pl := Plate{}
+	pl := state.Plate{}
 	pl.Address = d.Address
 	if e != nil {
 		pl.Name = fmt.Sprint(e)
@@ -62,7 +55,7 @@ func Incoming(d peerdiscovery.Discovered) {
 		}
 		pl.LastSeen = time.Now()
 	}
-	Nodes[d.Address] = pl
+	state.CurrentState.Nodes[d.Address] = pl
 	if Sample {
 		FrameSamples[d.Address] = append(FrameSamples[d.Address], *f)
 	}

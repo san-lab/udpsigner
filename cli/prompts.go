@@ -62,10 +62,10 @@ func Top() {
 func Peers() {
 
 	for {
-		pc := len(peers.Nodes)
+		pc := len(state.CurrentState.Nodes)
 		items := make([]string, pc+2)
 		i := 0
-		for k, v := range peers.Nodes {
+		for k, v := range state.CurrentState.Nodes {
 			items[i] = k + "/" + string(v.ID) + ": " + v.Name + "\tLast seen: " + v.LastSeen.Format("2006-01-02 15:04:05")
 			i++
 		}
@@ -103,13 +103,14 @@ const current = "Print current setup"
 const broadcast = "Manage broadcast"
 const thisname = "Set Name"
 const udp = "UDP Config"
+const dumpstate = "Dump state"
 
 func Setup() {
 	for {
 		prompt := promptui.Select{
 			Label: "Setup",
-			Items: []string{current, thisname, udp, knownshares, localkeys, up},
-			Size:  7,
+			Items: []string{current, thisname, udp, knownshares, localkeys, dumpstate, up},
+			Size:  8,
 		}
 		_, result, err := prompt.Run()
 		if err != nil {
@@ -131,8 +132,18 @@ func Setup() {
 			return
 		case knownshares:
 			KnownKeyShares()
+		case dumpstate:
+			DumpState()
 		}
 	}
+
+}
+
+//TODO delete this
+func DumpState() {
+	b, e := json.MarshalIndent(&state.CurrentState, " ", " ")
+	fmt.Println(e)
+	fmt.Println(string(b))
 
 }
 

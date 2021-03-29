@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/san-lab/secretsplitcli/goethkey"
+
 	"go.dedis.ch/kyber/v3"
 
 	"go.dedis.ch/kyber/v3/pairing"
@@ -24,16 +25,20 @@ type State struct {
 	suite               pairing.Suite
 	PendingJobs         map[string]*Job
 	DoneJobs            map[string]*Job
-	Results             map[ResultID]*JobResult
+	Results             map[ResultID]*JobResult `json:"-"`
 	JobBroadcast        map[string]int
-	ResultBroadcast     map[ResultID]int
+	ResultBroadcast     map[ResultID]int          `json:"-"`
 	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
-
+	Nodes               map[string]Plate
 }
 
 type ResultID struct {
 	JobID   string
 	AgentID AgentID
+}
+
+func (rid *ResultID) String() string {
+	return "{\"JobID\":\"" + rid.JobID + "\",\"AgentID\":\"" + string(rid.AgentID) + "\"}"
 }
 
 func (st *State) ComposeMessage() []byte {
@@ -106,6 +111,14 @@ var CurrentState = State{
 	DoneJobs:            map[string]*Job{},
 	ThisEvaluationPoint: pairing.NewSuiteBn256().G1().Scalar().One(),
 	KnownScalarShares:   map[string][]*ScalarShare{},
+	Nodes:               map[string]Plate{},
+}
+
+func (s *State) MarshalJSONb() ([]byte, error) {
+	jsn := []byte{'{'}
+
+	jsn = append(jsn, '}')
+	return jsn, nil
 }
 
 func (st *State) AddJobRequest(jr *Job) {
@@ -277,4 +290,16 @@ func (st *State) SetPrivKeyBytes(b []byte) {
 	G2 := st.suite.G2()
 	st.ThisSecretValue = G2.Scalar().SetBytes(b)
 	st.ThisPublicKey = G2.Point().Mul(st.ThisSecretValue, nil)
+}
+
+func (st *State) DumpState() []byte {
+	b, _ := json.MarshalIndent(st, " ", " ")
+	return b
+}
+
+type Plate struct {
+	Name     string
+	ID       AgentID
+	Address  string
+	LastSeen time.Time
 }
