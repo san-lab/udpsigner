@@ -90,6 +90,16 @@ func (st *State) ComposeMessage() []byte {
 	}
 	f.Timestamp = time.Now()
 
+	//Broadcast local queues
+	f.MyPendingJobs = []string{}
+	for jid := range st.PendingJobs {
+		f.MyPendingJobs = append(f.MyPendingJobs, jid)
+	}
+	f.MyDoneJobs = []string{}
+	for jid := range st.DoneJobs {
+		f.MyDoneJobs = append(f.MyDoneJobs, jid)
+	}
+
 	st.SignFrame(&f)
 	b, e := json.Marshal(f)
 	if e != nil {
@@ -298,8 +308,10 @@ func (st *State) DumpState() []byte {
 }
 
 type Plate struct {
-	Name     string
-	ID       AgentID
-	Address  string
-	LastSeen time.Time
+	Name        string
+	ID          AgentID
+	Address     string
+	LastSeen    time.Time
+	PendingJobs []string
+	DoneJobs    []string
 }

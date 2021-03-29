@@ -55,6 +55,8 @@ func Incoming(d peerdiscovery.Discovered) {
 		}
 		pl.LastSeen = time.Now()
 	}
+	pl.PendingJobs = f.MyPendingJobs
+	pl.DoneJobs = f.MyDoneJobs
 	state.CurrentState.Nodes[d.Address] = pl
 	if Sample {
 		FrameSamples[d.Address] = append(FrameSamples[d.Address], *f)
@@ -74,6 +76,7 @@ func Incoming(d peerdiscovery.Discovered) {
 	for _, r := range f.JobResults {
 		state.CurrentState.AddJobResult(r)
 	}
+
 }
 
 func DoSample(dur time.Duration) {

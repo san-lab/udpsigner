@@ -20,13 +20,15 @@ type JobResult struct {
 }
 
 type Frame struct {
-	SenderName  string
-	SenderID    AgentID
-	Timestamp   time.Time
-	JobRequests []*Job
-	JobResults  []*JobResult
-	PubKey      string
-	Signature   string
+	SenderName    string
+	SenderID      AgentID
+	Timestamp     time.Time
+	JobRequests   []*Job
+	JobResults    []*JobResult
+	MyPendingJobs []string
+	MyDoneJobs    []string
+	PubKey        string
+	Signature     string
 }
 
 func (f *Frame) FormToSign() ([]byte, error) {
