@@ -58,7 +58,7 @@ If enough nodes agree to collaborate, a valid signature (or a vaild Public Key) 
 As of beginnig of March 2021, there is only a couple of MPC algorithms: to calculate a BLS public key and a BLS message signature based on the (threshold) key shares owned by the nodes.
 
 
-## DEPENDENCIES/BUILD  
+## DEPENDENCIES/BUILD  
 Getting the code: 
 
     git clone https://github.com/san-lab/secretsplitcli
