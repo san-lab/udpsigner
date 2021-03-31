@@ -91,13 +91,13 @@ func (st *State) ComposeMessage() []byte {
 	f.Timestamp = time.Now()
 
 	//Broadcast local queues
-	f.MyPendingJobs = []string{}
+	f.MyPendingJobs = []JobLabel{}
 	for jid := range st.PendingJobs {
-		f.MyPendingJobs = append(f.MyPendingJobs, jid)
+		f.MyPendingJobs = append(f.MyPendingJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
 	}
-	f.MyDoneJobs = []string{}
+	f.MyPendingJobs = []JobLabel{}
 	for jid := range st.DoneJobs {
-		f.MyDoneJobs = append(f.MyDoneJobs, jid)
+		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
 	}
 
 	st.SignFrame(&f)
@@ -312,6 +312,6 @@ type Plate struct {
 	ID          AgentID
 	Address     string
 	LastSeen    time.Time
-	PendingJobs []string
-	DoneJobs    []string
+	PendingJobs []JobLabel
+	DoneJobs    []JobLabel
 }
