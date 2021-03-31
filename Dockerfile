@@ -7,15 +7,6 @@ RUN git clone https://github.com/san-lab/secretsplitcli.git && \
 
 WORKDIR  /src/github.com/san-lab/udpsigner
 COPY ./*.json ./
-ENV GOPATH=/
-WORKDIR  /src/github.com/san-lab/udpsigner
-RUN go get golang.org/x/crypto/sha3
-RUN go get github.com/schollz/peerdiscovery
-RUN go get github.com/google/uuid
-RUN go get go.dedis.ch/kyber/pairing
-RUN go get github.com/manifoldco/promptui
-RUN go get golang.org/x/term
-
-RUN go build
+RUN go get github.com/san-lab/udpsigner
 
 CMD ["/src/github.com/san-lab/udpsigner/udpsigner"]
