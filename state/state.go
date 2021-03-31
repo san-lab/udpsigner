@@ -99,7 +99,7 @@ func (st *State) ComposeMessage() []byte {
 	}
 	f.MyDoneJobs = []JobLabel{}
 	for jid := range st.DoneJobs {
-		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
+		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.DoneJobs[jid].Type})
 	}
 
 	st.SignFrame(&f)
