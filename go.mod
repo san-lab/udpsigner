@@ -1,9 +1,10 @@
 module github.com/san-lab/udpsigner
 
-go 1.16
+go 1.15
 
 require (
 	github.com/manifoldco/promptui v0.8.0
-	github.com/san-lab/udpsigner/peers v0.0.0-20210329153727-33b86e25edcb
-	github.com/san-lab/udpsigner/state v0.0.0-20210329153727-33b86e25edcb
+	github.com/san-lab/secretsplitcli v0.0.0-20210302103129-79cc0c450291
+	github.com/schollz/peerdiscovery v1.6.3
+	go.dedis.ch/kyber/v3 v3.0.13
 )
