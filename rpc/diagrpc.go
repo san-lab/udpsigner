@@ -32,6 +32,7 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 }
 
 func handleHttp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(state.CurrentState.DumpState())
 
 }

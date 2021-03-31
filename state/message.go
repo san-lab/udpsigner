@@ -25,10 +25,15 @@ type Frame struct {
 	Timestamp     time.Time
 	JobRequests   []*Job
 	JobResults    []*JobResult
-	MyPendingJobs []string
-	MyDoneJobs    []string
+	MyPendingJobs []JobLabel
+	MyDoneJobs    []JobLabel
 	PubKey        string
 	Signature     string
+}
+
+type JobLabel struct {
+	ID   string
+	Type JobType
 }
 
 func (f *Frame) FormToSign() ([]byte, error) {
