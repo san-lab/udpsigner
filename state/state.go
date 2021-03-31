@@ -95,7 +95,7 @@ func (st *State) ComposeMessage() []byte {
 	for jid := range st.PendingJobs {
 		f.MyPendingJobs = append(f.MyPendingJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
 	}
-	f.MyPendingJobs = []JobLabel{}
+	f.MyDoneJobs = []JobLabel{}
 	for jid := range st.DoneJobs {
 		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
 	}
