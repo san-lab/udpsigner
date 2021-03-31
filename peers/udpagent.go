@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"time"
 
 	"github.com/schollz/peerdiscovery"
@@ -22,7 +24,7 @@ func Initialize(state *state.State, ctx context.Context) (err error) {
 	S = peerdiscovery.Settings{Limit: -1,
 		PayloadFunc:      state.ComposeMessage,
 		TimeLimit:        -1,
-		Delay:            500 * time.Millisecond,
+		Delay:            1000 * time.Millisecond,
 		Notify:           Incoming,
 		DisableBroadcast: state.DisableBroadcast,
 	}
@@ -41,6 +43,7 @@ func Incoming(d peerdiscovery.Discovered) {
 		return
 	}
 	f := new(state.Frame)
+
 	e := json.Unmarshal(d.Payload, &f)
 	pl := state.Plate{}
 	pl.Address = d.Address
@@ -86,4 +89,16 @@ func DoSample(dur time.Duration) {
 		time.Sleep(dur)
 		Sample = false
 	}()
+}
+
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
 }
