@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"net"
 	"time"
 
 	"github.com/schollz/peerdiscovery"
@@ -89,16 +87,4 @@ func DoSample(dur time.Duration) {
 		time.Sleep(dur)
 		Sample = false
 	}()
-}
-
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP
 }

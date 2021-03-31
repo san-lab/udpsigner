@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"strconv"
 	"time"
 
@@ -30,6 +31,7 @@ type State struct {
 	ResultBroadcast     map[ResultID]int          `json:"-"`
 	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
 	Nodes               map[string]Plate
+	LocalIP             string
 }
 
 type ResultID struct {
@@ -122,6 +124,7 @@ var CurrentState = State{
 	ThisEvaluationPoint: pairing.NewSuiteBn256().G1().Scalar().One(),
 	KnownScalarShares:   map[string][]*ScalarShare{},
 	Nodes:               map[string]Plate{},
+	LocalIP:             GetOutboundIP(),
 }
 
 func (s *State) MarshalJSONb() ([]byte, error) {
@@ -314,4 +317,14 @@ type Plate struct {
 	LastSeen    time.Time
 	PendingJobs []JobLabel
 	DoneJobs    []JobLabel
+}
+
+func GetOutboundIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
 }

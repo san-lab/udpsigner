@@ -36,7 +36,7 @@ They should discover one-another automatically.
 
 To start one of the instances with the RPC service enabled pass the ENV variables in the docker run:
 ```
-docker run -it --rm -v $(pwd):/data  --env withHttp=true --env httpPort=8100 udpsigner
+docker run -it --rm -v $(pwd):/data  --env withHttp=true --env httpPort=8100 -p 8100:8100 udpsigner
 ```
 
 RPC service should be available in: http://localhost:8100/
