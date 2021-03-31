@@ -34,17 +34,9 @@ docker run -it --rm -v $(pwd):/data udpsigner
 
 They should discover one-another automatically. 
 
-To start one of the instances with the RPC service enabled replace the last line of the Dockerfile for:
-
+To start one of the instances with the RPC service enabled pass the ENV variables in the docker run:
 ```
-CMD ["/src/github.com/san-lab/udpsigner/udpsigner" , "-withHttp=true"]
-```
-
-Then build again and run the instance with the port 8100 enabled:
-
-```
-docker build -t udpsigner .
-docker run -it --rm -p 8100:8100 -v $(pwd):/data udpsigner
+docker run -it --rm -v $(pwd):/data  --env withHttp=true --env httpPort=8100 udpsigner
 ```
 
 RPC service should be available in: http://localhost:8100/
