@@ -93,14 +93,8 @@ func (st *State) ComposeMessage() []byte {
 	f.Timestamp = time.Now()
 
 	//Broadcast local queues
-	f.MyPendingJobs = []JobLabel{}
-	for jid := range st.PendingJobs {
-		f.MyPendingJobs = append(f.MyPendingJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
-	}
-	f.MyDoneJobs = []JobLabel{}
-	for jid := range st.DoneJobs {
-		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.DoneJobs[jid].Type})
-	}
+	f.MyPendingJobs = st.PendingJobsList()
+	f.MyDoneJobs = st.DoneJobsList()
 
 	st.SignFrame(&f)
 	b, e := json.Marshal(f)
