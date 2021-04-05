@@ -14,9 +14,9 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 	//Beware! This config means that all the static images - also the ones called from the templates -
 	// have to be addressed as "/static/*", regardless of the location of the template
 	fs := http.FileServer(http.Dir("static"))
-	http.HandleFunc("/static/", http.StripPrefix("/"+
-		"static", fs).ServeHTTP)
-	http.HandleFunc("/", handleHttp)
+
+	http.HandleFunc("/rpc", handleHttp)
+	http.HandleFunc("/", fs.ServeHTTP)
 	srv := http.Server{Addr: "0.0.0.0:" + httpPort}
 	//This is to graciously serve the ^C signal - allow all registered routines to clean up
 	go func() {
