@@ -39,7 +39,7 @@ func (st *State) ProcessMPSignJob(jb *Job) bool {
 		locRes.SuiteID = lps.SuiteID
 
 		resp := new(JobResult)
-		resp.ResultID = ResultID{jb.JobID, st.ThisId}
+		resp.ResultID = ResultID{jb.ID, st.ThisId}
 		b := PartSigToHEX(locRes)
 		resp.Result = b
 		jb.AddPartialResult(resp)
@@ -149,7 +149,7 @@ func NewMPSignJob(suiteID string, plaintext string) error {
 
 	j := Job{
 		Type:                 MPSignature,
-		JobID:                "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
+		ID:                   "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
 		AgentID:              st.ThisId,
 		PartialResults:       map[AgentID]*JobResult{},
 		partialResultArrival: MPSignKeyResultArrival,
@@ -172,7 +172,7 @@ func NewMPSignJob(suiteID string, plaintext string) error {
 
 	//Adding local share as a partilal result
 	pres := new(JobResult)
-	pres.ResultID = ResultID{j.JobID, st.ThisId}
+	pres.ResultID = ResultID{j.ID, st.ThisId}
 	pres.Arrived = time.Now()
 	pres.Result = j.Payload
 	j.PartialResults[st.ThisId] = pres

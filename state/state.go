@@ -40,7 +40,7 @@ type ResultID struct {
 }
 
 func (rid *ResultID) String() string {
-	return "{\"JobID\":\"" + rid.JobID + "\",\"AgentID\":\"" + string(rid.AgentID) + "\"}"
+	return "{\"ID\":\"" + rid.JobID + "\",\"AgentID\":\"" + string(rid.AgentID) + "\"}"
 }
 
 func (st *State) ComposeMessage() []byte {
@@ -139,9 +139,9 @@ func (st *State) AddJobRequest(jr *Job) {
 	if st.PendingJobs == nil {
 		st.PendingJobs = map[string]*Job{}
 	}
-	if _, known := st.PendingJobs[jr.JobID]; !known {
+	if _, known := st.PendingJobs[jr.ID]; !known {
 
-		st.PendingJobs[jr.JobID] = jr
+		st.PendingJobs[jr.ID] = jr
 	}
 
 }
@@ -166,17 +166,17 @@ const MPSignature = JobType("MPSignature")
 const MPPrivateKey = JobType("MPPrivateKey")
 
 type Job struct {
-	JobID                string
-	AgentID              AgentID
-	Type                 JobType
-	Accepted             time.Time `json:"-"`
-	Finished             bool
-	FinishedAt           time.Time `json:"-"`
-	success              bool
-	Error                string
-	PartialResults       map[AgentID]*JobResult `json:"-"`
-	FinalResult          string                 `json:"-"`
-	Payload              string
+	ID             string
+	AgentID        AgentID
+	Type           JobType
+	Accepted       time.Time `json:"-"`
+	Finished       bool
+	FinishedAt     time.Time `json:"-"`
+	success        bool
+	Error          string
+	PartialResults map[AgentID]*JobResult `json:"-"`
+	FinalResult    string                 `json:"-"`
+	Payload        string
 	partialResultArrival func(*JobResult) `json:"-"`
 }
 
@@ -285,18 +285,18 @@ func (st *State) ResultToBroadcastQueue(jres *JobResult, retry int) {
 }
 
 func (st *State) markAsDone(jb *Job) {
-	if _, pending := st.PendingJobs[jb.JobID]; !pending {
+	if _, pending := st.PendingJobs[jb.ID]; !pending {
 		return
 	}
-	CurrentState.DoneJobs[jb.JobID] = jb
-	delete(CurrentState.PendingJobs, jb.JobID)
+	CurrentState.DoneJobs[jb.ID] = jb
+	delete(CurrentState.PendingJobs, jb.ID)
 	jb.Finished = true
 	jb.FinishedAt = time.Now()
 }
 
 func JobToBroadcastQueue(jb *Job, retry int) {
-	CurrentState.PendingJobs[jb.JobID] = jb
-	CurrentState.JobBroadcast[jb.JobID] = retry
+	CurrentState.PendingJobs[jb.ID] = jb
+	CurrentState.JobBroadcast[jb.ID] = retry
 }
 
 func (st *State) SetPrivKeyBytes(b []byte) {
