@@ -47,11 +47,11 @@ func serveHTML(w http.ResponseWriter, r *http.Request) {
 	isSlash := func(c rune) bool { return c == '/' }
 	f := strings.FieldsFunc(r.URL.Path, isSlash)
 	if len(f) < 3 {
-		fmt.Frintln(w, "Please, specify the template")
+		fmt.Fprint(w, "Please, specify the template")
 		return
 
 	}
-	tempname := f[2]
+	//tempname := f[2]
 
 	w.Write([]byte("Templates here"))
 }

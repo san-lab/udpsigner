@@ -27,5 +27,5 @@ func (st *State) DoneJobsList() []JobLabel {
 	for jid := range st.DoneJobs {
 		mdn = append(mdn, JobLabel{ID: jid, Type: st.DoneJobs[jid].Type})
 	}
-	return mnd
+	return mdn
 }
