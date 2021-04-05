@@ -305,8 +305,44 @@ func (st *State) SetPrivKeyBytes(b []byte) {
 	st.ThisPublicKey = G2.Point().Mul(st.ThisSecretValue, nil)
 }
 
+type DumpState struct {
+	ThisName            string
+	ThisId              AgentID
+	ThisPassword        string
+	ThisEvaluationPoint kyber.Scalar
+	ThisSecretValue     kyber.Scalar
+	ThisPublicKey       kyber.Point
+	DisableBroadcast    bool
+	suite               pairing.Suite
+	PendingJobs         []*Job
+	DoneJobs            []*Job
+	Results             map[ResultID]*JobResult `json:"-"`
+	JobBroadcast        map[string]int
+	ResultBroadcast     map[ResultID]int          `json:"-"`
+	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
+	Nodes               []Plate
+	LocalIP             string
+}
+
 func (st *State) DumpState() []byte {
-	b, _ := json.MarshalIndent(st, " ", " ")
+	nodesArray := []Plate{}
+	for _, value := range st.Nodes {
+		nodesArray = append(nodesArray, value)
+	}
+
+	pendingJobs := []*Job{}
+	for _, value := range st.PendingJobs {
+		pendingJobs = append(pendingJobs, value)
+	}
+
+	doneJobs := []*Job{}
+	for _, value := range st.DoneJobs {
+		doneJobs = append(doneJobs, value)
+	}
+
+	dumpState := DumpState{ThisName: st.ThisName, ThisId : st.ThisId, ThisPassword :st.ThisPassword, ThisEvaluationPoint :st.ThisEvaluationPoint, ThisSecretValue : st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP }
+
+	b, _ := json.MarshalIndent(dumpState, " ", " ")
 	return b
 }
 
