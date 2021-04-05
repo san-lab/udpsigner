@@ -139,9 +139,9 @@ func (st *State) AddJobRequest(jr *Job) {
 	if st.PendingJobs == nil {
 		st.PendingJobs = map[string]*Job{}
 	}
-	if _, known := st.PendingJobs[jr.JobID]; !known {
+	if _, known := st.PendingJobs[jr.ID]; !known {
 
-		st.PendingJobs[jr.JobID] = jr
+		st.PendingJobs[jr.ID] = jr
 	}
 
 }
@@ -166,7 +166,7 @@ const MPSignature = JobType("MPSignature")
 const MPPrivateKey = JobType("MPPrivateKey")
 
 type Job struct {
-	JobID                string
+	ID                string
 	AgentID              AgentID
 	Type                 JobType
 	Accepted             time.Time `json:"-"`
@@ -181,7 +181,8 @@ type Job struct {
 }
 
 func SetRandomKey() {
-	G2 := CurrentState.suite.G2()
+	G2 := CurrentSt
+	ate.suite.G2()
 	CurrentState.ThisSecretValue = G2.Scalar().Pick(CurrentState.suite.RandomStream())
 	CurrentState.ThisPublicKey = G2.Point().Mul(CurrentState.ThisSecretValue, nil)
 }
@@ -285,18 +286,18 @@ func (st *State) ResultToBroadcastQueue(jres *JobResult, retry int) {
 }
 
 func (st *State) markAsDone(jb *Job) {
-	if _, pending := st.PendingJobs[jb.JobID]; !pending {
+	if _, pending := st.PendingJobs[jb.ID]; !pending {
 		return
 	}
-	CurrentState.DoneJobs[jb.JobID] = jb
-	delete(CurrentState.PendingJobs, jb.JobID)
+	CurrentState.DoneJobs[jb.ID] = jb
+	delete(CurrentState.PendingJobs, jb.ID)
 	jb.Finished = true
 	jb.FinishedAt = time.Now()
 }
 
 func JobToBroadcastQueue(jb *Job, retry int) {
-	CurrentState.PendingJobs[jb.JobID] = jb
-	CurrentState.JobBroadcast[jb.JobID] = retry
+	CurrentState.PendingJobs[jb.ID] = jb
+	CurrentState.JobBroadcast[jb.ID] = retry
 }
 
 func (st *State) SetPrivKeyBytes(b []byte) {
