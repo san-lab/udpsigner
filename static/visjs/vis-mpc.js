@@ -1,6 +1,6 @@
-// fetch('http://localhost:8100')
-//   .then(response => response.json())
-//   .then(state => {
+ fetch('http://localhost:8100')
+   .then(response => response.json())
+   .then(state => {
     //////////////NODES//////////////
 
     var node_off = (x_pos,y_pos,id_num, title_hover) => { return { id: id_num, shape: 'icon', icon: { face: "'FontAwesome'", code: "\uf1b2", size: 40, color: "black", }, borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
@@ -94,5 +94,5 @@
     };
 
     timeout()
-  // });
+   });
 
