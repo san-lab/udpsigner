@@ -93,14 +93,8 @@ func (st *State) ComposeMessage() []byte {
 	f.Timestamp = time.Now()
 
 	//Broadcast local queues
-	f.MyPendingJobs = []JobLabel{}
-	for jid := range st.PendingJobs {
-		f.MyPendingJobs = append(f.MyPendingJobs, JobLabel{ID: jid, Type: st.PendingJobs[jid].Type})
-	}
-	f.MyDoneJobs = []JobLabel{}
-	for jid := range st.DoneJobs {
-		f.MyDoneJobs = append(f.MyDoneJobs, JobLabel{ID: jid, Type: st.DoneJobs[jid].Type})
-	}
+	f.MyPendingJobs = st.PendingJobsList()
+	f.MyDoneJobs = st.DoneJobsList()
 
 	st.SignFrame(&f)
 	b, e := json.Marshal(f)
@@ -363,4 +357,45 @@ func GetOutboundIP() string {
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP.String()
+}
+
+func (jb *Job) JobDetailsString() string {
+	s := fmt.Sprintln("Job ID", jb.JobID)
+	s += fmt.Sprintln("Finished:", jb.Finished)
+	switch jb.Type {
+
+	case MPSignature:
+		psig, _ := PartSigFromHEX(jb.Payload)
+		s += fmt.Sprintf("Request to sign message: >>%s<<", psig.Plaintext)
+		s += fmt.Sprintln("Requested by:", jb.AgentID)
+		s += fmt.Sprintln("Suite:", psig.SuiteID)
+		s += fmt.Sprintln("Responses from")
+		for i, r := range jb.PartialResults {
+			psig2, _ := PartSigFromHEX(r.Result)
+			s += fmt.Sprintln(i, psig2.Signature)
+		}
+	case MPPublicKeyJT:
+		ss := new(PointShare)
+		ss.UnmarshalJSON([]byte(jb.Payload))
+		s += fmt.Sprintln("Request to reassemble Public Key")
+		s += fmt.Sprintln("Requested by:", jb.AgentID)
+		s += fmt.Sprintln("Suite:", ss.SuiteID)
+		s += fmt.Sprintln("Responses from")
+		for i, r := range jb.PartialResults {
+			ss.UnmarshalJSON([]byte(r.Result))
+			s += fmt.Sprintln(i, ss.P)
+		}
+	default:
+		s += fmt.Sprintln("Request:", jb.Payload)
+		s += fmt.Sprintln("Responses from")
+		for i, r := range jb.PartialResults {
+			lim := 32
+			if lim > len(r.Result) {
+				lim = len(r.Result)
+			}
+			s += fmt.Sprintln(i, r.Result[:lim], "...")
+		}
+	}
+	s += fmt.Sprintln("Final result:", jb.FinalResult)
+	return s
 }

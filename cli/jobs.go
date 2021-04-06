@@ -160,43 +160,9 @@ func ManageJob(jb *state.Job) {
 }
 
 func JobDetails(jb *state.Job) {
-	fmt.Println("Job Details for", jb.ID)
-	fmt.Println("Finished:", jb.Finished)
-	switch jb.Type {
-	case state.MPSignature:
-		psig, _ := state.PartSigFromHEX(jb.Payload)
-		fmt.Printf("Request to sign message: >>%s<<", psig.Plaintext)
-		fmt.Println("Requested by:", jb.AgentID)
-		fmt.Println("Suite:", psig.SuiteID)
-		fmt.Println("Responses from")
-		for i, r := range jb.PartialResults {
-			psig2, _ := state.PartSigFromHEX(r.Result)
-			fmt.Println(i, psig2.Signature)
-		}
-	case state.MPPublicKeyJT:
-		ss := new(state.PointShare)
-		ss.UnmarshalJSON([]byte(jb.Payload))
-		fmt.Println("Request to reassemble Public Key")
-		fmt.Println("Requested by:", jb.AgentID)
-		fmt.Println("Suite:", ss.SuiteID)
-		fmt.Println("Responses from")
-		for i, r := range jb.PartialResults {
-			ss.UnmarshalJSON([]byte(r.Result))
-			fmt.Println(i, ss.P)
-		}
-	default:
-		fmt.Println("Request:", jb.Payload)
-		fmt.Println("Responses from")
-		for i, r := range jb.PartialResults {
-			lim := 32
-			if lim > len(r.Result) {
-				lim = len(r.Result)
-			}
-			fmt.Println(i, r.Result[:lim], "...")
-		}
-	}
 
-	fmt.Println("Final result:", jb.FinalResult)
+	fmt.Println(jb.JobDetailsString())
+
 }
 
 func DeleteJob(jb *state.Job) {
