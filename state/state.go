@@ -160,17 +160,17 @@ const MPSignature = JobType("MPSignature")
 const MPPrivateKey = JobType("MPPrivateKey")
 
 type Job struct {
-	ID             string
-	AgentID        AgentID
-	Type           JobType
-	Accepted       time.Time `json:"-"`
-	Finished       bool
-	FinishedAt     time.Time `json:"-"`
-	success        bool
-	Error          string
-	PartialResults map[AgentID]*JobResult `json:"-"`
-	FinalResult    string                 `json:"-"`
-	Payload        string
+	ID                   string
+	AgentID              AgentID
+	Type                 JobType
+	Accepted             time.Time `json:"-"`
+	Finished             bool
+	FinishedAt           time.Time `json:"-"`
+	success              bool
+	Error                string
+	PartialResults       map[AgentID]*JobResult `json:"-"`
+	FinalResult          string                 `json:"-"`
+	Payload              string
 	partialResultArrival func(*JobResult) `json:"-"`
 }
 
@@ -334,7 +334,7 @@ func (st *State) DumpState() []byte {
 		doneJobs = append(doneJobs, value)
 	}
 
-	dumpState := DumpState{ThisName: st.ThisName, ThisId : st.ThisId, ThisPassword :st.ThisPassword, ThisEvaluationPoint :st.ThisEvaluationPoint, ThisSecretValue : st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP }
+	dumpState := DumpState{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP}
 
 	b, _ := json.MarshalIndent(dumpState, " ", " ")
 	return b
@@ -360,7 +360,7 @@ func GetOutboundIP() string {
 }
 
 func (jb *Job) JobDetailsString() string {
-	s := fmt.Sprintln("Job ID", jb.JobID)
+	s := fmt.Sprintln("Job ID", jb.ID)
 	s += fmt.Sprintln("Finished:", jb.Finished)
 	switch jb.Type {
 
