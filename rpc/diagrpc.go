@@ -21,6 +21,7 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 	http.HandleFunc("/react/", serveHTML)
 	http.HandleFunc("/", fs.ServeHTTP)
 	srv := http.Server{Addr: "0.0.0.0:" + httpPort}
+	state.CurrentState.HTTPPort = httpPort
 	//This is to graciously serve the ^C signal - allow all registered routines to clean up
 	go func() {
 		select {

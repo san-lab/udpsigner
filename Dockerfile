@@ -1,8 +1,8 @@
 FROM golang
 
-WORKDIR  /src/github.com/san-lab/udpsigner
-COPY ./*.json ./
-RUN go get github.com/san-lab/udpsigner
+WORKDIR /src/github.com/san-lab/udpsigner
+COPY . .
+RUN go build
 ENV httpPort "8100"
 ENV withHttp "false"
-CMD /go/bin/udpsigner -httpPort=$httpPort -withHttp=$withHttp ]
+CMD ./udpsigner -httpPort=$httpPort -withHttp=$withHttp 

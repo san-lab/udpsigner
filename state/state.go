@@ -32,6 +32,7 @@ type State struct {
 	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
 	Nodes               map[string]Plate
 	LocalIP             string
+	HTTPPort            string
 }
 
 type ResultID struct {
