@@ -17,8 +17,8 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 	// have to be addressed as "/static/*", regardless of the location of the template
 	fs := http.FileServer(http.Dir("static"))
 	renderer = templates.NewRenderer()
-	http.HandleFunc("/rpc", handleHttp)
-	http.HandleFunc("/react", serveHTML)
+	http.HandleFunc("/rpc/", handleHttp)
+	http.HandleFunc("/react/", serveHTML)
 	http.HandleFunc("/", fs.ServeHTTP)
 	srv := http.Server{Addr: "0.0.0.0:" + httpPort}
 	//This is to graciously serve the ^C signal - allow all registered routines to clean up
@@ -46,12 +46,20 @@ func serveHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	isSlash := func(c rune) bool { return c == '/' }
 	f := strings.FieldsFunc(r.URL.Path, isSlash)
-	if len(f) < 3 {
-		fmt.Fprint(w, "Please, specify the template")
+	if len(f) < 2 {
+		fmt.Fprint(w, "Please, specify the template", f)
 		return
 
 	}
-	//tempname := f[2]
-
+	tempname := f[1]
+	if tempname == "reload" {
+		renderer.LoadTemplates()
+		fmt.Fprintln(w, "Templates reloaded")
+		return
+	}
+	dat := templates.RenderData{}
+	dat.TemplateName = tempname
+	dat.BodyData = state.CurrentState
+	renderer.RenderResponse(w, &dat)
 	w.Write([]byte("Templates here"))
 }
