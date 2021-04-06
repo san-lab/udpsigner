@@ -1,4 +1,4 @@
- fetch('http://localhost:8100/rpc')
+ fetch('/rpc')
    .then(response => response.json())
    .then(state => {
     //////////////NODES//////////////
@@ -79,7 +79,7 @@
 
     function timeout() {
       setTimeout(function () {
-        fetch('http://localhost:8100/rpc')
+        fetch('/rpc')
           .then(response => response.json())
           .then(state => {
             numNodesInserted = updateNodesAndEdges(edges, nodes, state, numNodesInserted);
