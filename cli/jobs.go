@@ -121,7 +121,7 @@ const jresend = "Send again"
 const jdetails = "Details"
 
 func ManageJob(jb *state.Job) {
-	label := fmt.Sprintf("Job %v from %v accepted %v", jb.JobID, jb.AgentID, jb.Accepted)
+	label := fmt.Sprintf("Job %v from %v accepted %v", jb.ID, jb.AgentID, jb.Accepted)
 	items := []string{jdetails, japprove, jresend, jdelete, up}
 	for {
 		prompt := promptui.Select{
@@ -160,12 +160,13 @@ func ManageJob(jb *state.Job) {
 }
 
 func JobDetails(jb *state.Job) {
+
 	fmt.Println(jb.JobDetailsString())
 
 }
 
 func DeleteJob(jb *state.Job) {
-	delete(state.CurrentState.PendingJobs, jb.JobID)
+	delete(state.CurrentState.PendingJobs, jb.ID)
 
 }
 

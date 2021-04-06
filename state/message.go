@@ -7,7 +7,7 @@ import (
 
 /*
 type JobRequest struct {
-	JobID       string
+	ID       string
 	RequestorID AgentID
 	JobType     string
 	JobPayload  json.RawMessage

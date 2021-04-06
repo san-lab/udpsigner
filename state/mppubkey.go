@@ -31,7 +31,7 @@ func (st *State) ProcessMPPubJob(jb *Job) bool {
 		locRes := ScalarShareToPointShare(lps)
 
 		resp := new(JobResult)
-		resp.ResultID = ResultID{jb.JobID, st.ThisId}
+		resp.ResultID = ResultID{jb.ID, st.ThisId}
 		b, _ := locRes.MarshalJSON()
 		resp.Result = string(b)
 		jb.AddPartialResult(resp)
@@ -82,7 +82,7 @@ func NewMPPubJob(suiteID string) error {
 
 	j := Job{
 		Type:                 MPPublicKeyJT,
-		JobID:                "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
+		ID:                   "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
 		AgentID:              st.ThisId,
 		PartialResults:       map[AgentID]*JobResult{},
 		partialResultArrival: MPPubKeyResultArrival,
@@ -98,7 +98,7 @@ func NewMPPubJob(suiteID string) error {
 	j.Payload = string(b)
 	//Adding local share as a partilal result
 	pres := new(JobResult)
-	pres.ResultID = ResultID{j.JobID, st.ThisId}
+	pres.ResultID = ResultID{j.ID, st.ThisId}
 	pres.Arrived = time.Now()
 	pres.Result = string(b)
 	j.PartialResults[st.ThisId] = pres

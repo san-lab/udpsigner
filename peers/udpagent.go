@@ -65,12 +65,12 @@ func Incoming(d peerdiscovery.Discovered) {
 
 	jrq := f.JobRequests
 	for _, v := range jrq {
-		if _, known := state.CurrentState.PendingJobs[v.JobID]; !known {
-			fmt.Println("adding new job:", v.JobID)
+		if _, known := state.CurrentState.PendingJobs[v.ID]; !known {
+			fmt.Println("adding new job:", v.ID)
 			v.Accepted = time.Now()
 			state.CurrentState.AddJobRequest(v)
 		} else {
-			fmt.Println("Already seen ", v.JobID)
+			fmt.Println("Already seen ", v.ID)
 		}
 	}
 

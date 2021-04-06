@@ -7,7 +7,7 @@ import (
 
 func (st *State) ProcessTestJob(jb *Job) bool {
 	resp := new(JobResult)
-	resp.ResultID = ResultID{jb.JobID, st.ThisId}
+	resp.ResultID = ResultID{jb.ID, st.ThisId}
 	resp.Result = "OK fine"
 	jb.AddPartialResult(resp)
 	st.Results[resp.ResultID] = resp
@@ -43,7 +43,7 @@ func (st *State) NewTestJob(payload string) *Job {
 
 	j := Job{
 		Type:                 TestJT,
-		JobID:                "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
+		ID:                   "ID" + strconv.Itoa(test) + "f" + string(st.ThisId),
 		Payload:              payload,
 		AgentID:              st.ThisId,
 		PartialResults:       map[AgentID]*JobResult{},
