@@ -87,7 +87,6 @@
               nodes: nodes,
               edges: edges,
             };
-            network = new vis.Network(container, data, options);
           })
         timeout();
       }, 2000);

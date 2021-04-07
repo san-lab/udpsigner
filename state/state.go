@@ -317,14 +317,10 @@ type DumpState struct {
 	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
 	Nodes               []Plate
 	LocalIP             string
+	HTTPPort            string
 }
 
 func (st *State) DumpState() []byte {
-	nodesArray := []Plate{}
-	for _, value := range st.Nodes {
-		nodesArray = append(nodesArray, value)
-	}
-
 	pendingJobs := []*Job{}
 	for _, value := range st.PendingJobs {
 		pendingJobs = append(pendingJobs, value)
@@ -335,7 +331,23 @@ func (st *State) DumpState() []byte {
 		doneJobs = append(doneJobs, value)
 	}
 
-	dumpState := DumpState{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP}
+	pendingJobLabels := []JobLabel{}
+	for _, s := range pendingJobs {
+		pendingJobLabels = append(pendingJobLabels, JobLabel{ID: s.ID, Type: s.Type})
+	}
+	doneJobLabels := []JobLabel{}
+	for _, s := range doneJobs {
+		pendingJobLabels = append(pendingJobLabels, JobLabel{ID: s.ID, Type: s.Type})
+	}
+	actualNodePlate := Plate {Name: st.ThisName, ID: st.ThisId, Address: st.LocalIP, LastSeen: time.Now(), PendingJobs: pendingJobLabels, DoneJobs: doneJobLabels}
+
+	nodesArray := []Plate{}
+	nodesArray = append(nodesArray, actualNodePlate)
+	for _, value := range st.Nodes {
+		nodesArray = append(nodesArray, value)
+	}
+
+	dumpState := DumpState{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP, HTTPPort: st.HTTPPort}
 
 	b, _ := json.MarshalIndent(dumpState, " ", " ")
 	return b
