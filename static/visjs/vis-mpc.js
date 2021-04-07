@@ -17,7 +17,7 @@
 
     var updateNodesAndEdges = (edges, nodes,state, numNodesInserted) => {
       //State machine
-      numNodes = state["Nodes"].length + 1
+      numNodes = state["Nodes"].length
       titles = []
       for(let i = numNodesInserted; i < numNodes-1; i++){
         titles.push(buildTitle(state["Nodes"][i]["Name"], state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"]))
