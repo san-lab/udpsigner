@@ -16,10 +16,14 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 	//Beware! This config means that all the static images - also the ones called from the templates -
 	// have to be addressed as "/static/*", regardless of the location of the template
 	fs := http.FileServer(http.Dir("static"))
+	crossOrigFileServer := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		fs.ServeHTTP(w, r)
+	}
 	renderer = templates.NewRenderer()
 	http.HandleFunc("/rpc/", handleHttp)
 	http.HandleFunc("/react/", serveHTML)
-	http.HandleFunc("/", fs.ServeHTTP)
+	http.HandleFunc("/", crossOrigFileServer)
 	srv := http.Server{Addr: "0.0.0.0:" + httpPort}
 	state.CurrentState.HTTPPort = httpPort
 	//This is to graciously serve the ^C signal - allow all registered routines to clean up

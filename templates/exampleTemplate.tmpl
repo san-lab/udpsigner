@@ -38,45 +38,8 @@
     <div class="row mt-4">
     <h2 class="text-center">Pending Jobs</h2>
 {{if .BodyData.PendingJobs}}
-    <table class="table table-striped table-hover">
-      <thead>
-        <tr>
-          <th scope="col">Job ID</th>
-          <th scope="col">Agent ID</th>
-          <th scope="col">Type</th>
-          <th scope="col">Job Details</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range $id, $job := .BodyData.PendingJobs}}
-        <tr>
-          <th scope="row">{{$id}}</th>
-          <td>{{$job.AgentID}}</td>
-          <td>{{$job.Type}}</td>
-          <td><button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#modal{{$id}}">
-              Show Job Details
-            </button> 
-          </td>
-        </tr>
-        <div class="modal fade" id="modal{{$id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Job Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                {{$job.Payload}}
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        {{end}}
-      </tbody>
-    </table>
+   {{template "joblist" .BodyData.PendingJobs}}
+   {{else}} No pending MPC jobs
 {{end}}
   </div>
 
@@ -85,45 +48,8 @@
     <div class="row mt-4">
     <h2 class="text-center">Done Jobs</h2>
 {{if .BodyData.DoneJobs}}
-    <table class="table table-striped table-hover">
-      <thead>
-        <tr>
-          <th scope="col">Job ID</th>
-          <th scope="col">Agent ID</th>
-          <th scope="col">Type</th>
-          <th scope="col">Job Details</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range $id, $job := .BodyData.DoneJobs}}
-        <tr>
-          <th scope="row">{{$id}}</th>
-          <td>{{$job.AgentID}}</td>
-          <td>{{$job.Type}}</td>
-          <td><button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#modal{{$id}}">
-              Show Job Details
-            </button> 
-          </td>
-        </tr>
-        <div class="modal fade" id="modal{{$id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Job Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                {{$job.Payload}}
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        {{end}}
-      </tbody>
-    </table>
+{{template "joblist" .BodyData.DoneJobs}}
+{{else}} No finished MPC jobs yet
 {{end}}
   </div>
 
