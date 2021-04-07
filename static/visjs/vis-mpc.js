@@ -19,7 +19,6 @@
       //State machine
       numNodes = state["Nodes"].length + 1
       titles = []
-      titles.push(buildTitle(state["ThisName"], state["ThisId"], state["LocalIP"],state["PendingJobs"], state["DoneJobs"]))
       for(let i = numNodesInserted; i < numNodes-1; i++){
         titles.push(buildTitle(state["Nodes"][i]["Name"], state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"]))
       } 
