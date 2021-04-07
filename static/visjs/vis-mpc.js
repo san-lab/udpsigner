@@ -22,7 +22,6 @@
       for(let i = 0; i < numNodes; i++){
         titles.push(buildTitle(state["Nodes"][i]["Name"], state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"]))
       }
-      console.log(titles)
       for(let i = numNodesInserted; i < numNodes; i++){
         var randomColor = '#'+(Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0');
         nodes.add(node_on(0, 0,i, titles[i], randomColor));
