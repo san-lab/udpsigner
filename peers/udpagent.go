@@ -58,6 +58,7 @@ func Incoming(d peerdiscovery.Discovered) {
 	}
 	pl.PendingJobs = f.MyPendingJobs
 	pl.DoneJobs = f.MyDoneJobs
+	state.CurrentState.PruneDoneJobs(f.SenderID, f.MyDoneJobs)
 	state.CurrentState.Nodes[d.Address] = pl
 	if Sample {
 		FrameSamples[d.Address] = append(FrameSamples[d.Address], *f)

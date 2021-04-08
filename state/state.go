@@ -369,6 +369,16 @@ type Plate struct {
 	DoneJobs    []JobLabel
 }
 
+func (st *State) PruneDoneJobs(senderid AgentID, doneJobs []JobLabel) {
+	for _, jl := range doneJobs {
+		j, is := st.PendingJobs[jl.ID]
+
+		if is && j.AgentID == senderid {
+			delete(st.PendingJobs, j.ID)
+		}
+	}
+}
+
 func GetOutboundIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
