@@ -41,6 +41,11 @@ docker run -it --rm -v $(pwd):/data  --env withHttp=true --env httpPort=8100 -p 
 
 RPC service should be available in: http://localhost:8100/
 
+For experimenting with templates use the following command for the main node
+```
+docker run -it --env withHttp=true --env httpPort=8100 -p 8100:8100 -v $(pwd)/templates:/src/github.com/san-lab/udpsigner/templates udpsigner
+```
+
 
 Generate some SSS key shares using secretsplitcli, with any number of shares and threshold (within reason ;) ). 
 Then import respective keyfiles with shares into different nodes and issue a "job request" from ine of the nodes.
