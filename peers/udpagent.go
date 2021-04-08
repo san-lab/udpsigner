@@ -45,6 +45,7 @@ func Incoming(d peerdiscovery.Discovered) {
 	e := json.Unmarshal(d.Payload, &f)
 	pl := state.Plate{}
 	pl.Address = d.Address
+	pl.KnownKeyShares = f.KnownKeyShares
 	if e != nil {
 		pl.Name = fmt.Sprint(e)
 	} else {

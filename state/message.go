@@ -20,15 +20,16 @@ type JobResult struct {
 }
 
 type Frame struct {
-	SenderName    string
-	SenderID      AgentID
-	Timestamp     time.Time
-	JobRequests   []*Job
-	JobResults    []*JobResult
-	MyPendingJobs []JobLabel
-	MyDoneJobs    []JobLabel
-	PubKey        string
-	Signature     string
+	SenderName     string
+	SenderID       AgentID
+	Timestamp      time.Time
+	JobRequests    []*Job
+	JobResults     []*JobResult
+	MyPendingJobs  []JobLabel
+	MyDoneJobs     []JobLabel
+	KnownKeyShares [][]string //suiteID, Type, EvalPoint
+	PubKey         string
+	Signature      string
 }
 
 type JobLabel struct {
