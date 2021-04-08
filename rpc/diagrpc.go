@@ -68,6 +68,8 @@ func serveHTML(w http.ResponseWriter, r *http.Request) {
 	switch tempname {
 	case "nodes":
 		dat.BodyData = state.CurrentState.StateToPresentation()
+	case "nodesalt":
+		dat.BodyData = state.CurrentState.StateToPresentation()
 	default:
 		dat.BodyData = state.CurrentState
 	}
