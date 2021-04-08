@@ -1,7 +1,9 @@
 fetch('/rpc')
     .then(response => response.json())
     .then(state => {
-        //////////////NODES//////////////
+        //////////////NODES/////////////
+        pos_x = [-200, 200, 0]
+        pos_y = [100,100,-50]
 
         var node_off = (x_pos,y_pos,id_num, title_hover) => { return { id: id_num, shape: 'icon', icon: { face: "'FontAwesome'", code: "\uf1b2", size: 40, color: "black", }, borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
         var node_on = (x_pos,y_pos,id_num, title_hover, label_str) => { return { id: id_num, label: label_str, shape: 'image', image: "../cube.png", borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
@@ -23,7 +25,7 @@ fetch('/rpc')
                 titles.push(buildTitle(state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"]))
             }
             for(let i = numNodesInserted; i < numNodes; i++){
-                nodes.add(node_on(0, 0,i, titles[i], state["Nodes"][i]["Name"]));
+                nodes.add(node_on(pos_x[i], pos_y[i],i, titles[i], state["Nodes"][i]["Name"]));
                 if (i > 0) {
                     for(let j = 0; j < i; j++){
                         edges.add(between_nodes(j,i));
@@ -69,31 +71,16 @@ fetch('/rpc')
             edges: {
                 smooth: false
             },
-            physics: true,
+            physics: false,
             interaction: {
-                dragNodes: false,// do not allow dragging nodes
+                dragNodes: true,// do not allow dragging nodes
                 zoomView: false, // do not allow zooming
                 dragView: false  // do not allow dragging
             }
         };
-        var network = new vis.Network(container, data, options);
+
         var numNodesInserted = 0;
-
-        function timeout() {
-            setTimeout(function () {
-                fetch('/rpc')
-                    .then(response => response.json())
-                    .then(state => {
-                        numNodesInserted = updateNodesAndEdges(edges, nodes, state, numNodesInserted);
-                        var data = {
-                            nodes: nodes,
-                            edges: edges,
-                        };
-                    })
-                timeout();
-            }, 2000);
-        };
-
-        timeout()
+        numNodesInserted = updateNodesAndEdges(edges, nodes, state, numNodesInserted)
+        var network = new vis.Network(container, data, options);
     });
 
