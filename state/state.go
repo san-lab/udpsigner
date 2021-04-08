@@ -337,7 +337,7 @@ func (st *State) StateToPresentation() PresentationObject {
 	}
 	doneJobLabels := []JobLabel{}
 	for _, s := range doneJobs {
-		pendingJobLabels = append(pendingJobLabels, JobLabel{ID: s.ID, Type: s.Type})
+		doneJobLabels = append(doneJobLabels, JobLabel{ID: s.ID, Type: s.Type})
 	}
 	var name string
 	if (st.ThisName == "") {
