@@ -337,9 +337,15 @@ func (st *State) StateToPresentation() PresentationObject {
 	}
 	doneJobLabels := []JobLabel{}
 	for _, s := range doneJobs {
-		pendingJobLabels = append(pendingJobLabels, JobLabel{ID: s.ID, Type: s.Type})
+		doneJobLabels = append(doneJobLabels, JobLabel{ID: s.ID, Type: s.Type})
 	}
-	actualNodePlate := Plate{Name: st.ThisName, ID: st.ThisId, Address: st.LocalIP, LastSeen: time.Now(), PendingJobs: pendingJobLabels, DoneJobs: doneJobLabels}
+	var name string
+	if (st.ThisName == "") {
+		name = "not set"
+	} else {
+		name = st.ThisName
+	}
+	actualNodePlate := Plate{Name: name, ID: st.ThisId, Address: st.LocalIP, LastSeen: time.Now(), PendingJobs: pendingJobLabels, DoneJobs: doneJobLabels}
 
 	nodesArray := []Plate{}
 	nodesArray = append(nodesArray, actualNodePlate)
