@@ -1,6 +1,7 @@
 package state
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -91,6 +92,17 @@ func (st *State) ComposeMessage() []byte {
 		}
 
 	}
+	f.KnownKeyShares = [][]string{}
+	for suid, su := range st.KnownScalarShares {
+
+		for _, ss := range su {
+			h, _ := ss.E.MarshalBinary()
+			kns := []string{suid, "TBLS", hex.EncodeToString(h)}
+			f.KnownKeyShares = append(f.KnownKeyShares, kns)
+		}
+
+	}
+
 	f.Timestamp = time.Now()
 
 	//Broadcast local queues
@@ -340,7 +352,7 @@ func (st *State) StateToPresentation() PresentationObject {
 		doneJobLabels = append(doneJobLabels, JobLabel{ID: s.ID, Type: s.Type})
 	}
 	var name string
-	if (st.ThisName == "") {
+	if st.ThisName == "" {
 		name = "not set"
 	} else {
 		name = st.ThisName
@@ -367,12 +379,13 @@ func (st *State) PresentationObject() []byte {
 }
 
 type Plate struct {
-	Name        string
-	ID          AgentID
-	Address     string
-	LastSeen    time.Time
-	PendingJobs []JobLabel
-	DoneJobs    []JobLabel
+	Name           string
+	ID             AgentID
+	Address        string
+	LastSeen       time.Time
+	PendingJobs    []JobLabel
+	DoneJobs       []JobLabel
+	KnownKeyShares [][]string //suiteID, Type, EvalPoint
 }
 
 func (st *State) PruneDoneJobs(senderid AgentID, doneJobs []JobLabel) {
