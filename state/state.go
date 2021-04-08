@@ -300,7 +300,7 @@ func (st *State) SetPrivKeyBytes(b []byte) {
 	st.ThisPublicKey = G2.Point().Mul(st.ThisSecretValue, nil)
 }
 
-type DumpState struct {
+type PresentationObject struct {
 	ThisName            string
 	ThisId              AgentID
 	ThisPassword        string
@@ -320,7 +320,7 @@ type DumpState struct {
 	HTTPPort            string
 }
 
-func (st *State) DumpState() []byte {
+func (st *State) StateToPresentation() PresentationObject {
 	pendingJobs := []*Job{}
 	for _, value := range st.PendingJobs {
 		pendingJobs = append(pendingJobs, value)
@@ -339,7 +339,7 @@ func (st *State) DumpState() []byte {
 	for _, s := range doneJobs {
 		pendingJobLabels = append(pendingJobLabels, JobLabel{ID: s.ID, Type: s.Type})
 	}
-	actualNodePlate := Plate {Name: st.ThisName, ID: st.ThisId, Address: st.LocalIP, LastSeen: time.Now(), PendingJobs: pendingJobLabels, DoneJobs: doneJobLabels}
+	actualNodePlate := Plate{Name: st.ThisName, ID: st.ThisId, Address: st.LocalIP, LastSeen: time.Now(), PendingJobs: pendingJobLabels, DoneJobs: doneJobLabels}
 
 	nodesArray := []Plate{}
 	nodesArray = append(nodesArray, actualNodePlate)
@@ -347,9 +347,16 @@ func (st *State) DumpState() []byte {
 		nodesArray = append(nodesArray, value)
 	}
 
-	dumpState := DumpState{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP, HTTPPort: st.HTTPPort}
+	PresentationObject := PresentationObject{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP, HTTPPort: st.HTTPPort}
 
-	b, _ := json.MarshalIndent(dumpState, " ", " ")
+	return PresentationObject
+}
+
+func (st *State) PresentationObject() []byte {
+
+	presentObject := st.StateToPresentation()
+
+	b, _ := json.MarshalIndent(presentObject, " ", " ")
 	return b
 }
 

@@ -41,7 +41,7 @@ func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, i
 
 func handleHttp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Write(state.CurrentState.DumpState())
+	w.Write(state.CurrentState.PresentationObject())
 
 }
 
@@ -64,7 +64,14 @@ func serveHTML(w http.ResponseWriter, r *http.Request) {
 	}
 	dat := templates.RenderData{}
 	dat.TemplateName = tempname
-	dat.BodyData = state.CurrentState
+
+	switch tempname {
+	case "nodes":
+		dat.BodyData = state.CurrentState.StateToPresentation()
+	default:
+		dat.BodyData = state.CurrentState
+	}
+
 	renderer.RenderResponse(w, &dat)
 	w.Write([]byte("Templates here"))
 }
