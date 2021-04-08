@@ -39,7 +39,10 @@
     <h2 class="text-center">Pending Jobs</h2>
 {{if .BodyData.PendingJobs}}
    {{template "joblist" .BodyData.PendingJobs}}
-   {{else}} No pending MPC jobs
+   {{else}} 
+<div class="alert alert-warning" role="alert">
+  No pending MPC jobs
+</div>
 {{end}}
   </div>
 
@@ -49,7 +52,10 @@
     <h2 class="text-center">Done Jobs</h2>
 {{if .BodyData.DoneJobs}}
 {{template "joblist" .BodyData.DoneJobs}}
-{{else}} No finished MPC jobs yet
+{{else}}
+<div class="alert alert-warning" role="alert">
+  No finished MPC jobs yet
+</div>
 {{end}}
   </div>
 
