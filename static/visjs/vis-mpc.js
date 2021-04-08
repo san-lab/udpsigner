@@ -22,7 +22,7 @@ fetch('/rpc')
             numNodes = state["Nodes"].length
             titles = []
             for(let i = 0; i < numNodes; i++){
-                titles.push(buildTitle(state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"]))
+                titles.push(buildTitle(state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"], state["Nodes"][i]["KnownKeyShares"]))
             }
             for(let i = numNodesInserted; i < numNodes; i++){
                 nodes.add(node_on(pos_x[i], pos_y[i],i, titles[i], state["Nodes"][i]["Name"]));
@@ -39,7 +39,7 @@ fetch('/rpc')
             return numNodes
         }
 
-        var buildTitle = (ID, address, pending, done) => {
+        var buildTitle = (ID, address, pending, done, shares) => {
             var NodeInfo = "ID: " + ID + "\n" + "Address: " + address + "\n"
             var PendingJobs = "\nPending Jobs \n"
             if (pending.length > 0){
@@ -53,7 +53,13 @@ fetch('/rpc')
                     DoneJobs += done[i]["ID"] + "->" + done[i]["Type"] + "\n"
                 }
             }
-            return NodeInfo + PendingJobs + DoneJobs
+            var KnowShares = "\nKnow Shares \n"
+            if (shares.length > 0){
+                for (let i = 0; i < shares.length; i++){
+                    KnowShares += shares[i][0] + "\n"
+                }
+            }
+            return NodeInfo + PendingJobs + DoneJobs + KnowShares
         }
 
         //updateNodes(state);
