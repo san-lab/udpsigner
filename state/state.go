@@ -354,27 +354,10 @@ func (st *State) StateToPresentation() PresentationObject {
 	knownKeyShares := [][]string{}
 	for _, s := range st.KnownScalarShares {
 		for _, t := range s {
-			knownKeyShares = append(knownKeyShares, []string{t.SuiteID})
+			byteSlice,_ := t.E.MarshalBinary()
+			knownKeyShares = append(knownKeyShares, []string{t.SuiteID, "TBLS", hex.EncodeToString(byteSlice)})
 		}
 	}
-	/*{
-	  "9df9d494-7c3c-11eb-b8e6-b86b234894b8": [
-	   {
-	    "E": {
-	     "V": 1,
-	     "M": 65000549695646603732796438742359905742570406053903786389881062969044166799969,
-	     "BO": false
-	    },
-	    "V": {
-	     "V": 37061739367073949255169004587508216861376843949804335273021590578962832444251,
-	     "M": 65000549695646603732796438742359905742570406053903786389881062969044166799969,
-	     "BO": false
-	    },
-	    "T": 2,
-	    "SuiteID": "9df9d494-7c3c-11eb-b8e6-b86b234894b8"
-	   }
-	  ]
-	 }*/
 
 	var name string
 	if st.ThisName == "" {

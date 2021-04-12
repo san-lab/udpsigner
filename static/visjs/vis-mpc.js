@@ -7,6 +7,7 @@ fetch('/rpc')
 
         var node_off = (x_pos,y_pos,id_num, title_hover) => { return { id: id_num, shape: 'icon', icon: { face: "'FontAwesome'", code: "\uf1b2", size: 40, color: "black", }, borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
         var node_on = (x_pos,y_pos,id_num, title_hover, label_str) => { return { id: id_num, label: label_str, shape: 'image', image: "../cube.png", borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
+        var node_on_alt = (x_pos,y_pos,id_num, title_hover, label_str) => { return { id: id_num, label: label_str, shape: 'image', image: "../cube_2.png", borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
 
         var nodes = new vis.DataSet([]);
 
@@ -25,7 +26,12 @@ fetch('/rpc')
                 titles.push(buildTitle(state["Nodes"][i]["ID"], state["Nodes"][i]["Address"], state["Nodes"][i]["PendingJobs"], state["Nodes"][i]["DoneJobs"], state["Nodes"][i]["KnownKeyShares"]))
             }
             for(let i = numNodesInserted; i < numNodes; i++){
-                nodes.add(node_on(pos_x[i], pos_y[i],i, titles[i], state["Nodes"][i]["Name"]));
+                if (i == 0){
+                    nodes.add(node_on_alt(pos_x[i], pos_y[i],i, titles[i], state["Nodes"][i]["Name"]));
+                }
+                else {
+                    nodes.add(node_on(pos_x[i], pos_y[i], i, titles[i], state["Nodes"][i]["Name"]));
+                }
                 if (i > 0) {
                     for(let j = 0; j < i; j++){
                         edges.add(between_nodes(j,i));
