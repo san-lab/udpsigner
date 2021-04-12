@@ -2,8 +2,8 @@ fetch('/rpc')
     .then(response => response.json())
     .then(state => {
         //////////////NODES/////////////
-        pos_x = [-200, 200, 0]
-        pos_y = [100,100,-50]
+        pos_x = [-200, 200, 0, 0]
+        pos_y = [100,100,-50, 50]
 
         var node_off = (x_pos,y_pos,id_num, title_hover) => { return { id: id_num, shape: 'icon', icon: { face: "'FontAwesome'", code: "\uf1b2", size: 40, color: "black", }, borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
         var node_on = (x_pos,y_pos,id_num, title_hover, label_str) => { return { id: id_num, label: label_str, shape: 'image', image: "../cube.png", borderWidth: 2, x: x_pos, y: y_pos, title:  title_hover}}
@@ -62,7 +62,7 @@ fetch('/rpc')
             var KnowShares = "\nKnow Shares \n"
             if (shares.length > 0){
                 for (let i = 0; i < shares.length; i++){
-                    KnowShares += shares[i][0] + "\n"
+                    KnowShares += shares[i][0] + " (EvalPoint: " + parseInt(shares[i][2],16) + " )\n"
                 }
             }
             return NodeInfo + PendingJobs + DoneJobs + KnowShares
