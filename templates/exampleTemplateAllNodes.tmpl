@@ -97,14 +97,14 @@
       <tbody>
       {{range $innerId, $job := $node.DoneJobs}}
         <tr>
-          <th scope="row">{{$job.ID}} <span id="badge{{$id}}{{$innerId}}" class="badge bg-success"></span></th>
+          <th scope="row">{{$job.ID}} <span id="badgeD{{$id}}{{$innerId}}" class="badge bg-success"></span></th>
           <td>{{$job.Type}}</td>
         </tr>
           <script>
           JobID = {{$job.ID}};
           subID = JobID.substring(4);
           if (subID == "{{$node.ID}}") {
-          document.getElementById("badge{{$id}}{{$innerId}}").innerHTML = "Originator"; 
+          document.getElementById("badgeD{{$id}}{{$innerId}}").innerHTML = "Originator"; 
           } 
           </script>
         {{end}}
