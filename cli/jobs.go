@@ -144,6 +144,7 @@ func ManageJob(jb *state.Job) {
 			return
 		case japprove:
 			state.CurrentState.ProcessJob(jb)
+			return
 		case jresend:
 			if !jb.Finished {
 				state.JobToBroadcastQueue(jb, 1)
@@ -176,35 +177,34 @@ const pubkeyjob = "Public Key assembly"
 const localsign = "Local Signature"
 
 func NewJob() {
-	for {
-		prompt := promptui.Select{
-			Label: "Select Action ",
-			Items: []string{testjob, pubkeyjob, mpsignjob, localsign, up},
-			//AddLabel: endpoint,
-		}
 
-		_, result, err := prompt.Run()
-
-		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
-			return
-		}
-
-		switch result {
-		case testjob:
-			NewTestJob()
-		case pubkeyjob:
-			state.NewMPPubJobStart()
-		case mpsignjob:
-			state.NewMPSignJobStart()
-		case localsign:
-			TestLocalSignature()
-
-		case up:
-			return
-		}
-
+	prompt := promptui.Select{
+		Label: "Select Action ",
+		Items: []string{testjob, pubkeyjob, mpsignjob, localsign, up},
+		//AddLabel: endpoint,
 	}
+
+	_, result, err := prompt.Run()
+
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return
+	}
+
+	switch result {
+	case testjob:
+		NewTestJob()
+	case pubkeyjob:
+		state.NewMPPubJobStart()
+	case mpsignjob:
+		state.NewMPSignJobStart()
+	case localsign:
+		TestLocalSignature()
+
+	case up:
+		return
+	}
+
 }
 
 func NewTestJob() {

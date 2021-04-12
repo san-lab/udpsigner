@@ -11,12 +11,18 @@ import (
 	"github.com/san-lab/udpsigner/templates"
 )
 
+var Mainpage = "/react/nodes"
+
 func StartRPC(httpPort string, ctx context.Context, cancel context.CancelFunc, interruptChan chan os.Signal) {
 	fmt.Println("Starting http on port", httpPort)
 	//Beware! This config means that all the static images - also the ones called from the templates -
 	// have to be addressed as "/static/*", regardless of the location of the template
 	fs := http.FileServer(http.Dir("static"))
 	crossOrigFileServer := func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, Mainpage, 301)
+			return
+		}
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		fs.ServeHTTP(w, r)
 	}
