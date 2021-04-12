@@ -92,7 +92,7 @@ fetch('/rpc')
         };
 
         var numNodesInserted = 0;
-        numNodesInserted = updateNodesAndEdges(edges, nodes, state, numNodesInserted)
-        var network = new vis.Network(container, data, options);
+        updateNodesAndEdges(edges, nodes, state, numNodesInserted)
+        new vis.Network(container, data, options);
     });
 
