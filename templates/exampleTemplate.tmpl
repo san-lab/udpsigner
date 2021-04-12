@@ -24,15 +24,30 @@
 
   <div class="container mt-4">
 
-    <div class="text-center">
-      <figure class="figure">
+    <div class="row">
+
+
+    <div class="col">
+    <div class="text-end">
         <img src="/logo.png" class="figure-img img-fluid rounded" alt="Logo">
-      </figure>
     </div>
 
+    </div>
 
-    <h1 class="text-center">Welcome to Your MPC Visualize App</h1>
+    <div class="col">
+
     <h4 class="text-center">Node {{.BodyData.ThisId}} ({{with .BodyData.ThisName}}{{.}}{{else}}name not set{{end}})</h3>
+
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">LocalIP: {{.BodyData.LocalIP}}</li>
+      <li class="list-group-item">HTTPPort: {{.BodyData.HTTPPort}}</li>
+    </ul>
+
+
+
+    </div>
+
+    </div>
 
     <hr/>
     <div class="row mt-4">

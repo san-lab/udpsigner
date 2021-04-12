@@ -26,7 +26,7 @@
     }
   </style>
 
-  <title>MPC Visualize App 1</title>
+  <title>MPC Visualize App</title>
 </head>
 
 <body>
@@ -43,14 +43,16 @@
   <div class="col-sm">
     {{range $id, $node := .BodyData.Nodes}}
     <div class="row">
-    <div class="text-center">
-      <figure class="figure">
-        <img src="/worker.png" class="figure-img img-fluid rounded" alt="Worker">
-      </figure>
-    </div>
 
-    <h5 class="text-center">Node {{$node.ID}}</h5>
-    <h5 class="text-center"><em>{{$node.Name}}</em></h5>
+
+<div class="col-sm">
+        
+        <h5 class="text-center">
+        <img src="/worker.png" class="figure-img img-fluid rounded" alt="Worker">
+        Node {{$node.ID}}
+        <em>(name: {{$node.Name}})</em>
+        </h5>
+</div>
 
     <hr/>
     <h4 class="text-center">Pending Jobs</h4>
@@ -100,11 +102,18 @@
         </tr>
       </thead>
       <tbody>
-      {{range $id, $job := $node.DoneJobs}}
+      {{range $innerId, $job := $node.DoneJobs}}
         <tr>
-          <th scope="row">{{$job.ID}}</th>
+          <th scope="row">{{$job.ID}} <span id="badge{{$id}}{{$innerId}}" class="badge bg-success"></span></th>
           <td>{{$job.Type}}</td>
         </tr>
+          <script>
+          JobID = {{$job.ID}};
+          subID = JobID.substring(4);
+          if (subID == "{{$node.ID}}") {
+          document.getElementById("badge{{$id}}{{$innerId}}").innerHTML = "Originator"; 
+          } 
+          </script>
         {{end}}
       </tbody>
     </table>
