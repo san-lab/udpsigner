@@ -1,6 +1,8 @@
 package state
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -17,23 +19,26 @@ import (
 )
 
 type State struct {
-	ThisName            string
-	ThisId              AgentID
-	ThisPassword        string
-	ThisEvaluationPoint kyber.Scalar
-	ThisSecretValue     kyber.Scalar
-	ThisPublicKey       kyber.Point
-	DisableBroadcast    bool
-	suite               pairing.Suite
-	PendingJobs         map[string]*Job
-	DoneJobs            map[string]*Job
-	Results             map[ResultID]*JobResult `json:"-"`
-	JobBroadcast        map[string]int
-	ResultBroadcast     map[ResultID]int          `json:"-"`
-	KnownScalarShares   map[string][]*ScalarShare //First grouped by suite id
-	Nodes               map[string]Plate
-	LocalIP             string
-	HTTPPort            string
+	StateSerializable
+	ThisSecretValue   kyber.Scalar
+	ThisPublicKey     kyber.Point
+	suite             pairing.Suite             `json:"-"`
+	Results           map[ResultID]*JobResult   `json:"-"`
+	ResultBroadcast   map[ResultID]int          `json:"-"`
+	KnownScalarShares map[string][]*ScalarShare //First grouped by suite id
+	Nodes             map[string]Plate
+	LocalIP           string
+}
+
+type StateSerializable struct {
+	ThisName         string
+	ThisId           AgentID
+	ThisPassword     string
+	DisableBroadcast bool
+	PendingJobs      map[string]*Job
+	DoneJobs         map[string]*Job
+	JobBroadcast     map[string]int
+	HTTPPort         string
 }
 
 type ResultID struct {
@@ -120,18 +125,23 @@ func (st *State) ComposeMessage() []byte {
 }
 
 var src = rand.NewSource(time.Now().UnixNano())
-var CurrentState = State{
-	suite:               pairing.NewSuiteBn256(),
-	PendingJobs:         map[string]*Job{},
-	Results:             map[ResultID]*JobResult{},
-	JobBroadcast:        map[string]int{},
-	ResultBroadcast:     map[ResultID]int{},
-	ThisId:              AgentID(fmt.Sprint(src.Int63())),
-	DoneJobs:            map[string]*Job{},
-	ThisEvaluationPoint: pairing.NewSuiteBn256().G1().Scalar().One(),
-	KnownScalarShares:   map[string][]*ScalarShare{},
-	Nodes:               map[string]Plate{},
-	LocalIP:             GetOutboundIP(),
+var CurrentState = NewState()
+
+func NewState() *State {
+	return &State{
+		StateSerializable: StateSerializable{
+			PendingJobs:  map[string]*Job{},
+			JobBroadcast: map[string]int{},
+			ThisId:       AgentID(fmt.Sprint(src.Int63())),
+			DoneJobs:     map[string]*Job{},
+		},
+		suite:             pairing.NewSuiteBn256(),
+		Results:           map[ResultID]*JobResult{},
+		ResultBroadcast:   map[ResultID]int{},
+		KnownScalarShares: map[string][]*ScalarShare{},
+		Nodes:             map[string]Plate{},
+		LocalIP:           GetOutboundIP(),
+	}
 }
 
 func (s *State) MarshalJSONb() ([]byte, error) {
@@ -251,7 +261,7 @@ func (st *State) ImportKeyFile(filename string) (err error) {
 	if err != nil {
 		return
 	}
-	st.ThisEvaluationPoint = st.suite.G2().Scalar().SetInt64(int64(ps.I + 1))
+	//st.ThisEvaluationPoint = st.suite.G2().Scalar().SetInt64(int64(ps.I + 1))
 	st.ThisSecretValue = ps.V
 	st.ThisPublicKey = st.suite.G2().Point().Mul(ps.V, nil)
 
@@ -354,7 +364,7 @@ func (st *State) StateToPresentation() PresentationObject {
 	knownKeyShares := [][]string{}
 	for _, s := range st.KnownScalarShares {
 		for _, t := range s {
-			byteSlice,_ := t.E.MarshalBinary()
+			byteSlice, _ := t.E.MarshalBinary()
 			knownKeyShares = append(knownKeyShares, []string{t.SuiteID, "TBLS", hex.EncodeToString(byteSlice)})
 		}
 	}
@@ -373,7 +383,7 @@ func (st *State) StateToPresentation() PresentationObject {
 		nodesArray = append(nodesArray, value)
 	}
 
-	PresentationObject := PresentationObject{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisEvaluationPoint: st.ThisEvaluationPoint, ThisSecretValue: st.ThisSecretValue, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP, HTTPPort: st.HTTPPort}
+	PresentationObject := PresentationObject{ThisName: st.ThisName, ThisId: st.ThisId, ThisPassword: st.ThisPassword, ThisPublicKey: st.ThisPublicKey, DisableBroadcast: st.DisableBroadcast, suite: st.suite, PendingJobs: pendingJobs, DoneJobs: doneJobs, Results: st.Results, JobBroadcast: st.JobBroadcast, ResultBroadcast: st.ResultBroadcast, KnownScalarShares: st.KnownScalarShares, Nodes: nodesArray, LocalIP: st.LocalIP, HTTPPort: st.HTTPPort}
 
 	return PresentationObject
 }
@@ -414,4 +424,19 @@ func GetOutboundIP() string {
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP.String()
+}
+
+func (st *State) Serialize() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(st.StateSerializable)
+	return buf.Bytes(), err
+}
+
+func (st *State) Deserialize(b []byte) error {
+	dec := gob.NewDecoder(bytes.NewBuffer(b))
+	sts := new(StateSerializable)
+	err := dec.Decode(sts)
+	st.StateSerializable = *sts
+	return err
 }

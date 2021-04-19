@@ -31,7 +31,7 @@ func main() {
 		rpc.StartRPC(*httpPort, ctx, cancel, interruptChan)
 	}
 
-	go peers.Initialize(&state.CurrentState, ctx)
+	go peers.Initialize(state.CurrentState, ctx)
 	cli.Top()
 	wg.Wait()
 }

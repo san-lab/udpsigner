@@ -16,6 +16,50 @@ type ScalarShare struct {
 	SuiteID string       //Suite ID
 }
 
+func (ss *ScalarShare) Serialize() (ser []byte) {
+
+	//First T
+	ser = []byte{byte(ss.T)}
+
+	//Then Eval point
+	buf1, err := ss.E.MarshalBinary()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	ser = append(ser, buf1...)
+
+	//Then Point-Value
+	buf2, err := ss.V.MarshalBinary()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	ser = append(ser, buf2...)
+
+	//Last SuiteID
+	ser = append(ser, []byte(ss.SuiteID)...)
+	return
+}
+
+func (ss *ScalarShare) Deserialize(btes []byte) (*ScalarShare, error) {
+	if len(btes) < 65 {
+		return nil, fmt.Errorf("Wrong buffer length", len(btes))
+	}
+	ss.T = int(btes[0])
+	ss.E = CurrentState.suite.G2().Scalar()
+	ss.V = CurrentState.suite.G2().Scalar()
+
+	ss.E.SetBytes(btes[1:33])
+	ss.V.SetBytes(btes[33:65])
+	if len(btes) > 97 {
+		ss.SuiteID = string(btes[65:])
+	}
+	return ss, nil
+}
+
 //PointShare , as contrasted with kyber.share.PriShare, the value of E is NOT shifted by 1
 //It also keeps the threshold value and the ID common to all matching shares
 type PointShare struct {

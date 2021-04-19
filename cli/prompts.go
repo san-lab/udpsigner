@@ -5,8 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -141,9 +144,14 @@ func Setup() {
 
 //TODO delete this
 func DumpState() {
-	b, e := json.MarshalIndent(&state.CurrentState, " ", " ")
+	fmt.Println(state.CurrentState)
+	b, e := state.CurrentState.Serialize()
 	fmt.Println(e)
-	fmt.Println(string(b))
+	fmt.Println("---")
+	st2 := state.NewState()
+	e = st2.Deserialize(b)
+	fmt.Print(e)
+	fmt.Println(st2)
 
 }
 
@@ -151,12 +159,12 @@ const importshare = "Import a share from a file"
 
 func KnownKeyShares() {
 	for {
-		suites := make([]string, len(state.CurrentState.KnownScalarShares))
+		suites := make([][]*state.ScalarShare, len(state.CurrentState.KnownScalarShares))
 		labels := make([]string, len(suites))
 		i := 0
 		for su, l := range state.CurrentState.KnownScalarShares {
 			labels[i] = fmt.Sprintf("%s [%v of %v]", su, len(l), l[0].T)
-			suites[i] = su
+			suites[i] = l
 			i++
 		}
 		prpt := promptui.Select{
@@ -171,21 +179,52 @@ func KnownKeyShares() {
 		}
 		if res == importshare {
 			ImportNewShare()
+		} else {
+			ManageShareSuite(suites[i])
 		}
 
+	}
+}
+
+func ManageShareSuite(su []*state.ScalarShare) {
+	for {
+		labels := make([]string, len(su))
+		for i, ss := range su {
+			labels[i] = fmt.Sprintf("Value at %v", ss.E)
+
+		}
+		labels = append(labels, up)
+		prpt := promptui.Select{
+			Label: "Known shares of Suite " + su[0].SuiteID,
+			Items: labels,
+		}
+
+		i, res, err := prpt.Run()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if res == up {
+			return
+		}
+		fmt.Println(su[i].V)
 	}
 
 }
 
 func ImportNewShare() {
-	prompt := promptui.Prompt{
-		Label: "Sharefile name?",
+	curdir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	filename, err := prompt.Run()
+	defer os.Chdir(curdir) //Go bact to the starting dir after potential navigations
+
+	filename, err := SelectKeyFile()
 	if err != nil {
 		return
 	}
-	err = state.CurrentState.ImportShareFile(filename)
+	err = state.CurrentState.ImportShareFile(filename.Name())
 	return
 }
 
@@ -306,7 +345,6 @@ func PrintCurrentSetup() {
 	fmt.Println("AgentName", state.CurrentState.ThisName)
 	fmt.Println("AgentID", state.CurrentState.ThisId)
 	fmt.Println("PubKey", state.CurrentState.ThisPublicKey)
-	fmt.Println("EvalPt", state.CurrentState.ThisEvaluationPoint.String())
 	fmt.Println("Broadcast", !state.CurrentState.DisableBroadcast)
 }
 
@@ -378,15 +416,53 @@ func inputPrivKeyHEX() {
 
 }
 
-func ImportKeyFile() (err error) {
-	prompt := promptui.Prompt{
-		Label: "Keyfile name?",
+func SelectKeyFile() (FileInfo os.FileInfo, err error) {
+	for {
+		prompt := promptui.Select{
+			Label: "Select keyfile",
+		}
+		dir, err := ioutil.ReadDir(".")
+		it := []string{".."}
+		fi := []os.FileInfo{}
+		for _, file := range dir {
+			if strings.HasSuffix(file.Name(), ".json") || file.IsDir() {
+				it = append(it, file.Name())
+				fi = append(fi, file)
+			}
+		}
+		it = append(it, up)
+
+		prompt.Items = it
+		prompt.Size = len(it)
+		i, fname, err := prompt.Run()
+		if err != nil {
+			return nil, err
+		}
+		if fname == up {
+			return nil, fmt.Errorf("File selection cancelled")
+		}
+		if i == 0 || fi[i-1].IsDir() {
+			os.Chdir(fname)
+			continue
+		}
+		return fi[i-1], nil
 	}
-	filename, err := prompt.Run()
+}
+
+func ImportKeyFile() (err error) {
+	curdir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return err
+	}
+	defer os.Chdir(curdir) //Go bact to the starting dir after potential navigations
+	fi, err := SelectKeyFile()
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		return
 	}
-	err = state.CurrentState.ImportKeyFile(filename)
+	err = state.CurrentState.ImportKeyFile(fi.Name())
 	return
 }
 
@@ -404,7 +480,7 @@ func SetEvalPoint() {
 	prpt := promptui.Prompt{
 		Label:    "Set evaluation point",
 		Validate: ValidateEvalPoint,
-		Default:  state.CurrentState.ThisEvaluationPoint.String(),
+		//Default:  state.CurrentState.ThisEvaluationPoint.String(),
 	}
 	result, err := prpt.Run()
 	if err != nil {
@@ -412,7 +488,7 @@ func SetEvalPoint() {
 	} else {
 		bi := big.NewInt(0)
 		bi.SetString(result, 16)
-		state.CurrentState.ThisEvaluationPoint.SetBytes(bi.Bytes())
+		//state.CurrentState.ThisEvaluationPoint.SetBytes(bi.Bytes())
 	}
 
 }
