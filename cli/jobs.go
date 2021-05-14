@@ -128,7 +128,7 @@ func ManageJob(jb *state.Job) {
 			Label: label,
 			Items: items,
 			//AddLabel: endpoint,
-			Size: 7,
+			Size: 5,
 		}
 		_, result, err := prompt.Run()
 		if err != nil {
@@ -218,7 +218,7 @@ func NewTestJob() {
 		return
 	}
 	j := state.CurrentState.NewTestJob(result)
-	state.CurrentState.ProcessTestJob(j)
+	//state.CurrentState.ProcessTestJob(j)
 	state.JobToBroadcastQueue(j, 1)
 
 }

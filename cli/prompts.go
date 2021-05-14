@@ -224,7 +224,7 @@ func ImportNewShare() {
 	if err != nil {
 		return
 	}
-	err = state.CurrentState.ImportShareFile(filename.Name())
+	err = state.CurrentState.ImportShareFile(filename)
 	return
 }
 
@@ -416,36 +416,41 @@ func inputPrivKeyHEX() {
 
 }
 
-func SelectKeyFile() (FileInfo os.FileInfo, err error) {
+func SelectKeyFile() (filename string, err error) {
 	for {
 		prompt := promptui.Select{
 			Label: "Select keyfile",
 		}
 		dir, err := ioutil.ReadDir(".")
-		it := []string{".."}
+		it := []string{}
 		fi := []os.FileInfo{}
 		for _, file := range dir {
-			if strings.HasSuffix(file.Name(), ".json") || file.IsDir() {
+			if strings.HasSuffix(file.Name(), ".json") {
+				it = append([]string{file.Name()}, it...)
+				fi = append([]os.FileInfo{file}, fi...)
+			}
+			if file.IsDir() {
 				it = append(it, file.Name())
 				fi = append(fi, file)
 			}
 		}
 		it = append(it, up)
+		it = append([]string{".."}, it...)
 
 		prompt.Items = it
 		prompt.Size = len(it)
 		i, fname, err := prompt.Run()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		if fname == up {
-			return nil, fmt.Errorf("File selection cancelled")
+			return "", fmt.Errorf("File selection cancelled")
 		}
 		if i == 0 || fi[i-1].IsDir() {
 			os.Chdir(fname)
 			continue
 		}
-		return fi[i-1], nil
+		return fi[i-1].Name(), nil
 	}
 }
 
@@ -459,10 +464,7 @@ func ImportKeyFile() (err error) {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return
-	}
-	err = state.CurrentState.ImportKeyFile(fi.Name())
+	err = state.CurrentState.ImportKeyFile(fi)
 	return
 }
 
