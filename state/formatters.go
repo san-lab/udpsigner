@@ -60,7 +60,7 @@ func (jb *Job) JobDetailsString() string {
 		for i, r := range jb.PartialResults {
 			ss.UnmarshalJSON([]byte(r.Result))
 			hexpoint, _ := ss.P.MarshalBinary()
-			s += fmt.Sprintf("%v: @%v %T %s\n", i, ss.E, ss.P, shortString(hex.EncodeToString(hexpoint), 50))
+			s += fmt.Sprintf("%v: Value At:%v is a %T: %s\n", i, ss.E, ss.P, shortString(hex.EncodeToString(hexpoint), 50))
 		}
 	default:
 		s += fmt.Sprintln("Request:", jb.Payload)
